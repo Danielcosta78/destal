@@ -2,7 +2,7 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open('pagina-cache').then(cache => {
       return cache.addAll([
-        '/Chat',
+        '/Chat/index.html',
         '/icon-192.png',
       ]);
     })
