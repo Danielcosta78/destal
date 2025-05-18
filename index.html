@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Destal - Secure Decentralized Chat</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.11.2/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #4361ee;
+      --secondary-color: #3a0ca3;
+      --accent-color: #4cc9f0;
+      --dark-color: #212529;
+      --light-color: #f8f9fa;
+      --success-color: #4cc9f0;
+      --warning-color: #f8961e;
+      --danger-color: #f72585;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--dark-color);
+      background-color: #f8f9fa;
+    }
+    
+    .hero-section {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 5rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNwYXR0ZXJuKSIvPjwvc3ZnPg==');
+    }
+    
+    .navbar {
+      background-color: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .navbar-brand {
+      font-weight: 700;
+      color: var(--primary-color) !important;
+    }
+    
+    .nav-link {
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      color: var(--dark-color) !important;
+    }
+    
+    .nav-link:hover {
+      color: var(--primary-color) !important;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      background-color: #3a56e8;
+      border-color: #3a56e8;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+    }
+    
+    .btn-outline-primary {
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover {
+      background-color: var(--primary-color);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+    }
+    
+    .feature-card {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      height: 100%;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .feature-icon {
+      font-size: 2.5rem;
+      color: var(--primary-color);
+      margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 2rem;
+      font-weight: 700;
+    }
+    
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background: var(--primary-color);
+    }
+    
+    .how-it-works-step {
+      position: relative;
+      padding-left: 3rem;
+      margin-bottom: 2rem;
+    }
+    
+    .step-number {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--primary-color);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    
+    .testimonial-card {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      margin: 1rem;
+    }
+    
+    .testimonial-author {
+      font-weight: 600;
+      margin-top: 1.5rem;
+      color: var(--primary-color);
+    }
+    
+    .testimonial-role {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    
+    .footer {
+      background: var(--dark-color);
+      color: white;
+      padding: 4rem 0 2rem;
+    }
+    
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.7);
+      display: block;
+      margin-bottom: 0.5rem;
+      transition: all 0.3s ease;
+    }
+    
+    .footer-links a:hover {
+      color: white;
+      text-decoration: none;
+    }
+    
+    .social-links a {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 40px;
+      margin-right: 0.5rem;
+      transition: all 0.3s ease;
+    }
+    
+    .social-links a:hover {
+      background: var(--primary-color);
+      transform: translateY(-3px);
+    }
+    
+    .app-screenshot {
+      border-radius: 10px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .app-screenshot:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .security-badge {
+      display: inline-block;
+      background: rgba(76, 201, 240, 0.1);
+      color: var(--success-color);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-weight: 600;
+      margin: 0.5rem 0;
+    }
+    
+    .pricing-card {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .pricing-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .pricing-price {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin: 1rem 0;
+    }
+    
+    .pricing-features {
+      list-style: none;
+      padding: 0;
+      margin: 2rem 0;
+    }
+    
+    .pricing-features li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .highlight-card {
+      border: 2px solid var(--primary-color);
+      position: relative;
+    }
+    
+    .highlight-badge {
+      position: absolute;
+      top: -15px;
+      right: 20px;
+      background: var(--primary-color);
+      color: white;
+      padding: 0.25rem 1rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .cta-section {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 5rem 0;
+      text-align: center;
+    }
+    
+    .cta-section .btn {
+      background: white;
+      color: var(--primary-color);
+      font-weight: 700;
+      margin: 0 0.5rem;
+    }
+    
+    .cta-section .btn-outline-light {
+      background: transparent;
+      color: white;
+      border-color: white;
+    }
+    
+    .cta-section .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+      .hero-section {
+        padding: 3rem 0;
+      }
+      
+      .hero-title {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-comments mr-2"></i>Destal
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#features">Features</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#how-it-works">How It Works</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#security">Security</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#testimonials">Testimonials</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#pricing">Pricing</a>
+          </li>
+          <li class="nav-item ml-lg-3">
+            <a class="btn btn-outline-primary" href="/chat.html">Launch App</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-lg-6">
+          <h1 class="hero-title font-weight-bold mb-4">Secure, Decentralized Chat for Everyone</h1>
+          <p class="lead mb-5">Experience true privacy with our peer-to-peer encrypted messaging platform. No servers, no middlemen, just direct communication.</p>
+          <div class="d-flex flex-wrap">
+            <a href="/chat.html" class="btn btn-light btn-lg mr-3 mb-3">Start Chatting Now</a>
+            <a href="#how-it-works" class="btn btn-outline-light btn-lg mb-3">Learn More</a>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <img src="https://via.placeholder.com/600x400/4361ee/ffffff?text=Destal+App" alt="Destal App Interface" class="img-fluid app-screenshot">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="py-5">
+    <div class="container">
+      <div class="text-center mb-5">
+        <h2 class="section-title">Why Choose Destal</h2>
+        <p class="lead">The most secure way to communicate online</p>
+      </div>
+      <div class="row">
+        <div class="col-md-4 mb-4">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-lock"></i>
+            </div>
+            <h3>End-to-End Encryption</h3>
+            <p>All messages are encrypted directly between peers. Not even we can read your conversations.</p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-4">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-server"></i>
+            </div>
+            <h3>No Central Servers</h3>
+            <p>Peer-to-peer architecture means no central point of failure or data collection.</p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-4">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-user-secret"></i>
+            </div>
+            <h3>Complete Anonymity</h3>
+            <p>No phone numbers or personal information required to start chatting.</p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-4">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-bolt"></i>
+            </div>
+            <h3>Lightning Fast</h3>
+            <p>Direct connections mean lower latency and faster message delivery.</p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-4">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-code"></i>
+            </div>
+            <h3>Open Source</h3>
+            <p>Transparent codebase that anyone can audit and contribute to.</p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-4">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-globe"></i>
+            </div>
+            <h3>Browser-Based</h3>
+            <p>No downloads required. Works on any modern browser.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section id="how-it-works" class="py-5 bg-light">
+    <div class="container">
+      <div class="text-center mb-5">
+        <h2 class="section-title">How It Works</h2>
+        <p class="lead">Get started in just a few simple steps</p>
+      </div>
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="how-it-works-step">
+            <div class="step-number">1</div>
+            <h3>Create Your Identity</h3>
+            <p>Generate a unique ID that serves as your identity in the network. You can create multiple IDs for different purposes.</p>
+          </div>
+          <div class="how-it-works-step">
+            <div class="step-number">2</div>
+            <h3>Connect With Peers</h3>
+            <p>Share your ID with contacts or enter their ID to establish a direct connection. No phone numbers or emails required.</p>
+          </div>
+          <div class="how-it-works-step">
+            <div class="step-number">3</div>
+            <h3>Start Chatting Securely</h3>
+            <p>All messages are encrypted end-to-end and never pass through any central server.</p>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <img src="https://via.placeholder.com/600x500/f8f9fa/212529?text=How+It+Works" alt="How Destal Works" class="img-fluid rounded">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security Section -->
+  <section id="security" class="py-5">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-lg-6 order-lg-2">
+          <div class="pl-lg-5">
+            <h2 class="section-title mb-4">Military-Grade Security</h2>
+            <div class="security-badge">End-to-End Encryption</div>
+            <p class="mb-4">Destal uses WebRTC's built-in encryption combined with additional security layers to ensure your messages can only be read by the intended recipient.</p>
+            
+            <div class="security-badge">Perfect Forward Secrecy</div>
+            <p class="mb-4">Each session generates unique encryption keys, preventing mass decryption even if a key is compromised.</p>
+            
+            <div class="security-badge">No Metadata Collection</div>
+            <p>We don't store who you talk to or when, because we don't have servers that could store this information.</p>
+          </div>
+        </div>
+        <div class="col-lg-6 order-lg-1">
+          <img src="https://via.placeholder.com/600x500/f8f9fa/212529?text=Security+Features" alt="Security Features" class="img-fluid rounded">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section id="testimonials" class="py-5 bg-light">
+    <div class="container">
+      <div class="text-center mb-5">
+        <h2 class="section-title">What Users Say</h2>
+        <p class="lead">Trusted by privacy-conscious individuals worldwide</p>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="testimonial-card">
+            <i class="fas fa-quote-left text-muted mb-4" style="font-size: 2rem;"></i>
+            <p>Finally a chat app that respects my privacy without compromising on usability. The perfect balance between security and convenience.</p>
+            <div class="testimonial-author">Sarah Johnson</div>
+            <div class="testimonial-role">Journalist</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="testimonial-card">
+            <i class="fas fa-quote-left text-muted mb-4" style="font-size: 2rem;"></i>
+            <p>As a security researcher, I appreciate the transparency of Destal's architecture. It's rare to find truly serverless solutions.</p>
+            <div class="testimonial-author">Michael Chen</div>
+            <div class="testimonial-role">Security Analyst</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="testimonial-card">
+            <i class="fas fa-quote-left text-muted mb-4" style="font-size: 2rem;"></i>
+            <p>I use Destal for sensitive business communications. The ability to create disposable identities is a game-changer.</p>
+            <div class="testimonial-author">Emma Rodriguez</div>
+            <div class="testimonial-role">Entrepreneur</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section id="pricing" class="py-5">
+    <div class="container">
+      <div class="text-center mb-5">
+        <h2 class="section-title">Simple, Transparent Pricing</h2>
+        <p class="lead">Premium features to enhance your experience</p>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="pricing-card">
+            <h3>Basic</h3>
+            <div class="pricing-price">Free</div>
+            <ul class="pricing-features">
+              <li>Unlimited peer-to-peer messaging</li>
+              <li>End-to-end encryption</li>
+              <li>Multiple identities</li>
+              <li>Contact management</li>
+            </ul>
+            <a href="/chat.html" class="btn btn-outline-primary">Get Started</a>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="pricing-card highlight-card">
+            <div class="highlight-badge">Popular</div>
+            <h3>Pro</h3>
+            <div class="pricing-price">$5<span class="text-muted" style="font-size: 1rem;">/month</span></div>
+            <ul class="pricing-features">
+              <li>Everything in Basic</li>
+              <li>Message history backup</li>
+              <li>File sharing (up to 1GB)</li>
+              <li>Priority support</li>
+              <li>Custom themes</li>
+            </ul>
+            <a href="#" class="btn btn-primary">Upgrade Now</a>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="pricing-card">
+            <h3>Enterprise</h3>
+            <div class="pricing-price">Custom</div>
+            <ul class="pricing-features">
+              <li>Everything in Pro</li>
+              <li>Team management</li>
+              <li>Dedicated infrastructure</li>
+              <li>On-premise deployment</li>
+              <li>24/7 support</li>
+            </ul>
+            <a href="#" class="btn btn-outline-primary">Contact Sales</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <h2 class="text-white mb-4">Ready to experience true private messaging?</h2>
+      <p class="lead text-white mb-5">Join thousands of users who value their privacy.</p>
+      <div class="d-flex justify-content-center flex-wrap">
+        <a href="/chat.html" class="btn btn-light btn-lg mr-3 mb-3">Start Chatting Now</a>
+        <a href="#" class="btn btn-outline-light btn-lg mb-3">Learn More</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4 mb-4">
+          <h4 class="text-white mb-4"><i class="fas fa-comments mr-2"></i>Destal</h4>
+          <p>The most secure decentralized chat platform. No servers, no tracking, just private conversations.</p>
+          <div class="social-links mt-4">
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="#"><i class="fab fa-discord"></i></a>
+            <a href="#"><i class="fab fa-telegram"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-6 mb-4">
+          <h5 class="text-white mb-4">Product</h5>
+          <div class="footer-links">
+            <a href="/chat.html">App</a>
+            <a href="#features">Features</a>
+            <a href="#security">Security</a>
+            <a href="#pricing">Pricing</a>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-6 mb-4">
+          <h5 class="text-white mb-4">Resources</h5>
+          <div class="footer-links">
+            <a href="#">Documentation</a>
+            <a href="#">API</a>
+            <a href="#">GitHub</a>
+            <a href="#">Blog</a>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-6 mb-4">
+          <h5 class="text-white mb-4">Company</h5>
+          <div class="footer-links">
+            <a href="#">About</a>
+            <a href="#">Team</a>
+            <a href="#">Careers</a>
+            <a href="#">Contact</a>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-6 mb-4">
+          <h5 class="text-white mb-4">Legal</h5>
+          <div class="footer-links">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">GDPR</a>
+            <a href="#">Cookies</a>
+          </div>
+        </div>
+      </div>
+      <hr class="bg-secondary mt-5">
+      <div class="row">
+        <div class="col-md-6 text-center text-md-left">
+          <p class="mb-0 text-muted">© 2023 Destal. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-right">
+          <p class="mb-0 text-muted">Made with <i class="fas fa-heart text-danger"></i> for a private web</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Smooth scrolling for anchor links
+    $(document).on('click', 'a[href^="#"]', function(event) {
+      event.preventDefault();
+      $('html, body').animate({
+        scrollTop: $($.attr(this, 'href')).offset().top - 70
+      }, 500);
+    });
+    
+    // Navbar background change on scroll
+    $(window).scroll(function() {
+      if ($(this).scrollTop() > 50) {
+        $('.navbar').addClass('navbar-scrolled');
+      } else {
+        $('.navbar').removeClass('navbar-scrolled');
+      }
+    });
+  </script>
+</body>
+</html>
