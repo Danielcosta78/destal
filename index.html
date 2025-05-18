@@ -547,22 +547,27 @@
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Smooth scrolling for anchor links
-    $(document).on('click', 'a[href^="#"]', function(event) {
-      event.preventDefault();
-      $('html, body').animate({
-        scrollTop: $($.attr(this, 'href')).offset().top - 70
-      }, 500);
-    });
-    
-    // Navbar background change on scroll
-    $(window).scroll(function() {
-      if ($(this).scrollTop() > 50) {
-        $('.navbar').addClass('navbar-scrolled');
-      } else {
-        $('.navbar').removeClass('navbar-scrolled');
-      }
-    });
+  // Smooth scrolling for anchor links
+  $(document).on('click', 'a[href^="#"]', function(event) {
+    event.preventDefault();
+    $('html, body').animate({
+      scrollTop: $($.attr(this, 'href')).offset().top - 70
+    }, 500);
+  });
+
+  // Navbar background change on scroll
+  $(window).scroll(function() {
+    if ($(this).scrollTop() > 50) {
+      $('.navbar').addClass('navbar-scrolled');
+    } else {
+      $('.navbar').removeClass('navbar-scrolled');
+    }
+  });
+
+  // Fecha o menu colapsável ao clicar em um link (para mobile)
+  $(document).on('click', '.navbar-collapse.show a', function () {
+    $('.navbar-collapse').collapse('hide');
+  });
   </script>
 </body>
 </html>
