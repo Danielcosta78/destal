@@ -4,7 +4,6 @@ self.addEventListener('install', e => {
       return cache.addAll([
         '/Chat',
         '/icon-192.png',
-        '/icon-512.png'
       ]);
     })
   );
