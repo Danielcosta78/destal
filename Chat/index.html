@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="manifest" href="/manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('Service Worker registrado com sucesso.'))
+      .catch(error => console.log('Erro ao registrar Service Worker:', error));
+  }
+</script>
 <link rel="icon" href="../icon-192.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -15,6 +23,20 @@
       --danger-color: #f72585;
       --light-color: #f8f9fa;
       --dark-color: #212529;
+    }
+
+    #install-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #0d6efd;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 1000;
+    display: none;
     }
     
     body { 
@@ -261,6 +283,7 @@
   </style>
 </head>
 <body>
+  <button id="install-btn">Install App</button>
 <nav class="navbar navbar-light px-3">
   <a class="navbar-brand">Destal <small>Decentralized Chat</small></a>
   <div class="d-flex align-items-center ml-auto">
@@ -731,5 +754,28 @@ $('#clearAllIds').click(function() {
   }
 });
 </script>
+  <script>
+  let deferredPrompt;
+  const installBtn = document.getElementById('install-btn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
+  });
+
+  installBtn.addEventListener('click', () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(choiceResult => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('App instalado');
+        }
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      });
+    }
+  });
+  </script>
 </body>
 </html>
