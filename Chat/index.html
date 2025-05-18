@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="manifest" href="../manifest.json">
+  <link rel="manifest" href="/Chat/manifest.json">
 <meta name="theme-color" content="#000000">
-<link rel="icon" href="../icon-192.png">
+<link rel="icon" href="/icon-192.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Decentralized Chat</title>
@@ -756,7 +756,7 @@ $('#clearAllIds').click(function() {
 </script>
   <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('../service-worker.js')
+    navigator.serviceWorker.register('/Chat/service-worker.js')
       .then(() => console.log('Service Worker registrado'));
   }
   </script>
