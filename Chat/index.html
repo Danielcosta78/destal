@@ -450,6 +450,68 @@
       padding: 0.25rem 0.5rem;
     }
 
+    /* Estilos para mensagens de arquivo */
+    .file-message {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      background-color: #f0f8ff;
+      border-radius: 8px;
+      margin: 5px 0;
+    }
+
+    .file-icon {
+      margin-right: 10px;
+      font-size: 1.5rem;
+    }
+
+    .file-info {
+      flex: 1;
+    }
+
+    .file-name {
+      font-weight: 500;
+      word-break: break-all;
+    }
+
+    .file-size {
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    .download-btn {
+      margin-left: 10px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .connection-status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #6c757d;
+      margin-left: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .connection-status-dot.connected {
+      background-color: #4cc9f0;
+      box-shadow: 0 0 8px rgba(76, 201, 240, 0.6);
+    }
+
+    .connection-status-dot.disconnected {
+      background-color: #f72585;
+    }
+
+    .connection-status-dot.ready {
+      background-color: #FFFF00;
+      box-shadow: 0 0 8px rgba(67, 97, 238, 0.6);
+    }
+
     @media (min-width: 769px) {
       .sidebar {
         transform: translateX(-100%);
@@ -470,29 +532,6 @@
         display: block;
       }
     }
-    
-    .connection-status-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: #6c757d; /* Cor padrão (cinza) */
-  margin-left: 10px;
-  transition: all 0.3s ease;
-}
-
-.connection-status-dot.connected {
-  background-color: #4cc9f0; /* Cor quando conectado */
-  box-shadow: 0 0 8px rgba(76, 201, 240, 0.6);
-}
-
-.connection-status-dot.disconnected {
-  background-color: #f72585; /* Cor quando desconectado */
-}
-
-.connection-status-dot.ready {
-  background-color: #FFFF00; /* Cor quando pronto para conectar */
-  box-shadow: 0 0 8px rgba(67, 97, 238, 0.6);
-}
   </style>
 </head>
 <body>
@@ -612,8 +651,8 @@
           <i class="fas fa-comments"></i>Destal &nbsp;<small>Decentralized Chat</small>
         </a>
         <div class="ml-auto d-flex align-items-center">
-  <div id="connectionStatus" class="connection-status-dot"></div>
-</div>
+          <div id="connectionStatus" class="connection-status-dot"></div>
+        </div>
       </nav>
 
       <!-- Área de Mensagens -->
@@ -627,11 +666,15 @@
             <div class="input-group">
               <input id="messageText" type="text" class="form-control" placeholder="Type your message..." autofocus>
               <div class="input-group-append">
+                <button id="fileSelect" class="btn btn-outline-secondary" title="Send file">
+                  <i class="fas fa-paperclip"></i>
+                </button>
                 <button id="messageSend" class="btn btn-primary">
                   <i class="fas fa-paper-plane"></i>
                 </button>
               </div>
             </div>
+            <input type="file" id="fileInput" style="display: none;">
           </div>
         </div>
       </div>
@@ -683,23 +726,23 @@
     });
 
     // Atualizar status
-function setStatus(text, color, statusClass) {
-  $('#status').text(text);
-  $('#status-icon').removeClass('icon-connected icon-ready icon-disconnected').addClass('icon-' + color);
-  $('#status').removeClass('badge-connected badge-ready badge-disconnected').addClass(statusClass);
-  
-  // Atualiza a bolinha de status na navbar
-  const $statusDot = $('#connectionStatus');
-  $statusDot.removeClass('connected disconnected ready');
-  
-  if (text === 'Connected') {
-    $statusDot.addClass('connected');
-  } else if (text === 'Ready to connect') {
-    $statusDot.addClass('ready');
-  } else {
-    $statusDot.addClass('disconnected');
-  }
-}
+    function setStatus(text, color, statusClass) {
+      $('#status').text(text);
+      $('#status-icon').removeClass('icon-connected icon-ready icon-disconnected').addClass('icon-' + color);
+      $('#status').removeClass('badge-connected badge-ready badge-disconnected').addClass(statusClass);
+      
+      // Atualiza a bolinha de status na navbar
+      const $statusDot = $('#connectionStatus');
+      $statusDot.removeClass('connected disconnected ready');
+      
+      if (text === 'Connected') {
+        $statusDot.addClass('connected');
+      } else if (text === 'Ready to connect') {
+        $statusDot.addClass('ready');
+      } else {
+        $statusDot.addClass('disconnected');
+      }
+    }
 
     // Obter timestamp formatado
     function getTimestamp(ms) {
@@ -709,23 +752,101 @@ function setStatus(text, color, statusClass) {
 
     // Adicionar mensagem ao chat
     function addMessage(msg) {
+      if (msg.type === 'file') {
+        displayFileMessage(msg);
+      } else {
+        const isCurrentUser = msg.author === peer?.id;
+        const authorName = isCurrentUser ? 
+          'You' : 
+          (msg.authorName || msg.author.substring(0, 8));
+        
+        const messageType = msg.type === 'info' ? 'info-message' : 'text-message';
+        
+        const messageHTML = `
+          <div class="message ${isCurrentUser ? 'user-message' : 'peer-message'} ${messageType}">
+            <span class="timestamp">${getTimestamp(msg.timestamp)}</span>
+            <div class="message-author">${authorName}</div>
+            ${msg.type === 'info' ? 'connected' : msg.content}
+          </div>
+        `;
+        
+        $('#messageBox').append(messageHTML);
+      }
+      $('#messageBox').scrollTop($('#messageBox')[0].scrollHeight);
+    }
+
+    // Função para exibir mensagens de arquivo
+    function displayFileMessage(msg, isSender = false) {
       const isCurrentUser = msg.author === peer?.id;
       const authorName = isCurrentUser ? 
         'You' : 
         (msg.authorName || msg.author.substring(0, 8));
       
-      const messageType = msg.type === 'info' ? 'info-message' : 'text-message';
-      
-      const messageHTML = `
-        <div class="message ${isCurrentUser ? 'user-message' : 'peer-message'} ${messageType}">
+      // Formatando o tamanho do arquivo
+      const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      };
+
+      const fileHTML = `
+        <div class="message ${isCurrentUser ? 'user-message' : 'peer-message'}">
           <span class="timestamp">${getTimestamp(msg.timestamp)}</span>
           <div class="message-author">${authorName}</div>
-          ${msg.type === 'info' ? 'connected' : msg.content}
+          <div class="file-message">
+            <div class="file-icon">
+              <i class="fas ${getFileIcon(msg.file.type)}"></i>
+            </div>
+            <div class="file-info">
+              <div class="file-name">${msg.file.name}</div>
+              <div class="file-size">${formatFileSize(msg.file.size)}</div>
+            </div>
+            ${!isSender ? `<button class="download-btn" onclick="downloadFile('${msg.file.name.replace(/'/g, "\\'")}', '${msg.file.data.replace(/'/g, "\\'")}')">
+              <i class="fas fa-download"></i> Download
+            </button>` : ''}
+          </div>
         </div>
       `;
       
-      $('#messageBox').append(messageHTML);
-      $('#messageBox').scrollTop($('#messageBox')[0].scrollHeight);
+      $('#messageBox').append(fileHTML);
+    }
+
+    // Função para obter ícone baseado no tipo de arquivo
+    function getFileIcon(fileType) {
+      if (!fileType) return 'fa-file';
+      
+      const type = fileType.split('/')[0];
+      const subtype = fileType.split('/')[1];
+      
+      const icons = {
+        image: 'fa-file-image',
+        audio: 'fa-file-audio',
+        video: 'fa-file-video',
+        application: {
+          pdf: 'fa-file-pdf',
+          msword: 'fa-file-word',
+          'vnd.openxmlformats-officedocument.wordprocessingml.document': 'fa-file-word',
+          'vnd.ms-excel': 'fa-file-excel',
+          'vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'fa-file-excel',
+          'vnd.ms-powerpoint': 'fa-file-powerpoint',
+          'vnd.openxmlformats-officedocument.presentationml.presentation': 'fa-file-powerpoint',
+          zip: 'fa-file-archive',
+          'x-rar-compressed': 'fa-file-archive',
+          'x-7z-compressed': 'fa-file-archive'
+        },
+        text: 'fa-file-alt'
+      };
+      
+      if (icons[type]) {
+        if (type === 'application' && icons.application[subtype]) {
+          return icons.application[subtype];
+        }
+        return icons[type];
+      }
+      
+      return 'fa-file';
     }
 
     // Criar objeto de mensagem
@@ -809,6 +930,51 @@ function setStatus(text, color, statusClass) {
         alert('PeerJS Error: ' + err.message);
       });
     }
+
+    // Configurar o seletor de arquivos
+    $('#fileSelect').click(() => $('#fileInput').click());
+
+    $('#fileInput').change(function() {
+      if (!conn || !conn.open) {
+        alert('Not connected to any peer');
+        return;
+      }
+
+      const file = this.files[0];
+      if (!file) return;
+
+      // Criar um blob URL para o arquivo
+      const blobUrl = URL.createObjectURL(file);
+
+      // Criar mensagem de arquivo
+      const fileMessage = {
+        type: 'file',
+        author: peer.id,
+        authorName: $('#myIdName').val().trim() || peer.id.substring(0, 8),
+        timestamp: Date.now(),
+        file: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          blobUrl: blobUrl,
+          data: null
+        }
+      };
+
+      // Enviar o arquivo usando a conexão de dados
+      const fileReader = new FileReader();
+      fileReader.onload = function(event) {
+        fileMessage.file.data = event.target.result;
+        conn.send(fileMessage);
+        
+        // Mostrar a mensagem no chat
+        displayFileMessage(fileMessage, true);
+      };
+      fileReader.readAsDataURL(file);
+
+      // Limpar o input de arquivo
+      $(this).val('');
+    });
 
     // Gerar ID aleatório
     $('#generateId').click(() => {
@@ -972,6 +1138,14 @@ function setStatus(text, color, statusClass) {
         }
       }
     }
+
+    // Função para download de arquivo
+    window.downloadFile = function(filename, dataURL) {
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = filename;
+      link.click();
+    };
 
     // Copiar para área de transferência
     window.copyToClipboard = function(text, $element) {
