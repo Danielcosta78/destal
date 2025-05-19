@@ -514,6 +514,18 @@
       box-shadow: 0 0 8px rgba(67, 97, 238, 0.6);
     }
 
+    /* Estilo para os botões de export/import */
+    .btn-outline-secondary.clear-btn {
+      color: #6c757d;
+      border-color: #6c757d;
+    }
+
+    .btn-outline-secondary.clear-btn:hover {
+      color: #fff;
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+
     @media (min-width: 769px) {
       .sidebar {
         transform: translateX(-100%);
@@ -615,9 +627,17 @@
         <div class="sidebar-section">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="sidebar-title collapsed" id="contactsTitle"><i class="fas fa-chevron-down"></i><i class="fas fa-users ml-2"></i> Contacts</h5>
-            <button class="btn btn-sm btn-outline-danger clear-btn" id="clearAllContacts">
-              <i class="fas fa-trash-alt"></i>
-            </button>
+            <div>
+              <button class="btn btn-sm btn-outline-secondary clear-btn mr-1" id="exportContacts" title="Export contacts">
+                <i class="fas fa-file-export"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary clear-btn mr-1" id="importContacts" title="Import contacts">
+                <i class="fas fa-file-import"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger clear-btn" id="clearAllContacts">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
           </div>
           <div class="collapsible-content" id="contactsContent">
             <ul id="contactsList" class="contact-list"></ul>
@@ -628,9 +648,17 @@
         <div class="sidebar-section">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="sidebar-title collapsed" id="myIdsTitle"><i class="fas fa-chevron-down"></i><i class="fas fa-id-card ml-2"></i> My IDs</h5>
-            <button class="btn btn-sm btn-outline-danger clear-btn" id="clearAllIds">
-              <i class="fas fa-trash-alt"></i>
-            </button>
+            <div>
+              <button class="btn btn-sm btn-outline-secondary clear-btn mr-1" id="exportMyIds" title="Export my IDs">
+                <i class="fas fa-file-export"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary clear-btn mr-1" id="importMyIds" title="Import my IDs">
+                <i class="fas fa-file-import"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger clear-btn" id="clearAllIds">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
           </div>
           <div class="collapsible-content" id="myIdsContent">
             <ul id="myIdsList" class="contact-list"></ul>
@@ -688,6 +716,9 @@
 
   <!-- Botão de Instalação -->
   <button id="install-btn">Install App</button>
+
+  <!-- Input oculto para importação -->
+  <input type="file" id="importFileInput" accept=".json" style="display: none;">
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
@@ -1225,6 +1256,148 @@
       } else {
         alert('No ID to copy');
       }
+    });
+
+    // Função para exportar contatos
+    $('#exportContacts').click(function() {
+      const contacts = JSON.parse(localStorage.getItem('contacts') || '[]');
+      if (contacts.length === 0) {
+        alert('No contacts to export');
+        return;
+      }
+      
+      const dataStr = JSON.stringify(contacts, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+      
+      const exportName = 'destal_contacts_' + new Date().toISOString().slice(0, 10) + '.json';
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportName);
+      linkElement.click();
+    });
+
+    // Função para exportar meus IDs
+    $('#exportMyIds').click(function() {
+      const myIds = JSON.parse(localStorage.getItem('myids') || '[]');
+      if (myIds.length === 0) {
+        alert('No IDs to export');
+        return;
+      }
+      
+      const dataStr = JSON.stringify(myIds, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+      
+      const exportName = 'destal_myids_' + new Date().toISOString().slice(0, 10) + '.json';
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportName);
+      linkElement.click();
+    });
+
+    // Função para importar contatos
+    $('#importContacts').click(function() {
+      $('#importFileInput').off('change').on('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const newContacts = JSON.parse(e.target.result);
+            if (!Array.isArray(newContacts)) {
+              throw new Error('Invalid format: expected an array of contacts');
+            }
+            
+            const currentContacts = JSON.parse(localStorage.getItem('contacts') || '[]');
+            const mergedContacts = [...currentContacts];
+            
+            newContacts.forEach(newContact => {
+              if (!newContact.id || !newContact.name) {
+                throw new Error('Invalid contact format: missing id or name');
+              }
+              
+              // Verifica se o contato já existe
+              const existingIndex = currentContacts.findIndex(c => c.id === newContact.id);
+              if (existingIndex === -1) {
+                mergedContacts.push(newContact);
+              } else {
+                // Atualiza o nome se for diferente
+                if (currentContacts[existingIndex].name !== newContact.name) {
+                  mergedContacts[existingIndex].name = newContact.name;
+                }
+              }
+            });
+            
+            localStorage.setItem('contacts', JSON.stringify(mergedContacts));
+            updateContactsList();
+            alert(`Successfully imported ${newContacts.length} contacts. Total contacts now: ${mergedContacts.length}`);
+          } catch (error) {
+            alert('Error importing contacts: ' + error.message);
+            console.error('Import error:', error);
+          }
+          
+          // Limpa o input para permitir nova importação
+          $(this).val('');
+        };
+        
+        reader.readAsText(file);
+      });
+      
+      $('#importFileInput').click();
+    });
+
+    // Função para importar meus IDs
+    $('#importMyIds').click(function() {
+      $('#importFileInput').off('change').on('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const newIds = JSON.parse(e.target.result);
+            if (!Array.isArray(newIds)) {
+              throw new Error('Invalid format: expected an array of IDs');
+            }
+            
+            const currentIds = JSON.parse(localStorage.getItem('myids') || '[]');
+            const mergedIds = [...currentIds];
+            
+            newIds.forEach(newId => {
+              if (!newId.id || !newId.name) {
+                throw new Error('Invalid ID format: missing id or name');
+              }
+              
+              // Verifica se o ID já existe
+              const existingIndex = currentIds.findIndex(i => i.id === newId.id);
+              if (existingIndex === -1) {
+                mergedIds.push(newId);
+              } else {
+                // Atualiza o nome se for diferente
+                if (currentIds[existingIndex].name !== newId.name) {
+                  mergedIds[existingIndex].name = newId.name;
+                }
+              }
+            });
+            
+            localStorage.setItem('myids', JSON.stringify(mergedIds));
+            updateMyIdsList();
+            alert(`Successfully imported ${newIds.length} IDs. Total IDs now: ${mergedIds.length}`);
+          } catch (error) {
+            alert('Error importing IDs: ' + error.message);
+            console.error('Import error:', error);
+          }
+          
+          // Limpa o input para permitir nova importação
+          $(this).val('');
+        };
+        
+        reader.readAsText(file);
+      });
+      
+      $('#importFileInput').click();
     });
 
     // Inicializar UI
