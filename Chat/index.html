@@ -579,7 +579,6 @@
       border: none;
       color: white;
       font-size: 1.25rem;
-      margin-left: 15px;
       cursor: pointer;
     }
 
@@ -804,6 +803,110 @@
         display: block;
       }
     }
+    
+    /* Estilos para o botão de informações */
+.info-toggle {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+/* Estilos para o modal de informações */
+.info-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 1001;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.info-modal.active {
+  display: flex;
+}
+
+.info-modal-content {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  border: 1px solid var(--border-color);
+}
+
+.info-modal-header {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background-color: var(--card-bg);
+  z-index: 1;
+}
+
+.info-modal-header h5 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.close-info-modal {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.info-modal-body {
+  padding: 15px;
+}
+
+.info-modal-body h6 {
+  margin-top: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.info-modal-body ul {
+  padding-left: 20px;
+}
+
+.info-modal-body ul li {
+  margin-bottom: 5px;
+}
+
+.version-info {
+  margin-top: 20px;
+  text-align: right;
+  color: #6c757d;
+}
+
+/* Estilos para os botões do cabeçalho */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 12px; /* Espaçamento igual entre os botões */
+  align-items: center;
+}
   </style>
 </head>
 <body>
@@ -812,7 +915,11 @@
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <h5><i class="fas fa-comments mr-2"></i>Menu</h5>
-         <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        
+            <button class="info-toggle" id="infoToggle" title="App information">
+      <i class="fas fa-info-circle"></i>
+    </button>
+        	<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
             <i class="fas fa-moon"></i>
           </button>
         <button class="close-sidebar" id="closeSidebar">
@@ -1021,6 +1128,40 @@
     </div>
   </div>
 
+  <!-- Modal de Informações -->
+<div class="info-modal" id="infoModal">
+  <div class="info-modal-content">
+    <div class="info-modal-header">
+      <h5><i class="fas fa-info-circle mr-2"></i>About Destal Chat</h5>
+      <button class="close-info-modal" id="closeInfoModal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="info-modal-body">
+      <p>Destal is a decentralized peer-to-peer chat application that works directly between browsers without central servers.</p>
+      <p>Due to the nature of decentralization, when you close the connection the entire conversation is deleted.</p>
+      <h6><i class="fas fa-shield-alt mr-2"></i>Privacy</h6>
+      <p>All communication is end-to-end encrypted. Your data never passes through our servers.</p>
+      
+      <h6><i class="fas fa-code mr-2"></i>Technology</h6>
+      <p>Built with WebRTC for real-time communication and PeerJS for peer connection management.</p>
+      
+      <h6><i class="fas fa-heart mr-2"></i>Features</h6>
+      <ul>
+        <li>Text messaging</li>
+        <li>File sharing</li>
+        <li>Audio/video calls</li>
+        <li>Dark/light mode</li>
+        <li>App available</li>
+      </ul>
+      
+      <div class="version-info">
+        <small>Version: 1.2.4</small>
+      </div>
+    </div>
+  </div>
+</div>
+  
   <!-- Botão de Instalação -->
   <button id="install-btn">Install App</button>
 
@@ -2015,6 +2156,26 @@
       });
     }
   });
+  
+  // Controle do modal de informações
+function openInfoModal() {
+  $('#infoModal').addClass('active');
+  $('body').css('overflow', 'hidden');
+}
+
+function closeInfoModal() {
+  $('#infoModal').removeClass('active');
+  $('body').css('overflow', '');
+}
+
+// Eventos para abrir/fechar o modal de informações
+$('#infoToggle').click(openInfoModal);
+$('#closeInfoModal').click(closeInfoModal);
+$('#infoModal').click(function(e) {
+  if (e.target === this) {
+    closeInfoModal();
+  }
+});
   </script>
 </body>
-  </html>
+          </html>
