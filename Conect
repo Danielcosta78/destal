@@ -1,0 +1,14 @@
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+const peer = new Peer(undefined, {
+  host: '0.peerjs.com',
+  port: 443,
+  path: '/',
+  secure: true
+});
+</script>
+
+host: 'peerjs-server.herokuapp.com'
+port: 443
+path: '/'
+secure: true
