@@ -16,14 +16,14 @@
       'DESTAL-PRO-2023': {
         name: 'Pro Version',
         features: ['themes', 'large-files', 'history'],
-        expires: '2023-12-31'
+        expires: null
       },
       
       // Chave Ultra (todos recursos)
       'DESTAL-ULTRA-2023': {
         name: 'Ultra Version',
         features: ['themes', 'emojis', 'large-files', 'history', 'colored-names'],
-        expires: '2023-12-31'
+        expires: null
       },
       
       // Chave de teste para desenvolvimento
