@@ -1485,48 +1485,48 @@ function initialize() {
     // ==============================================
 
     // Iniciar uma chamada
- async function startCall(callType) {
-  if (!peer || !conn || !conn.open) {
-    alert('Not connected to any peer');
-    return;
-  }
+    async function startCall(callType) {
+      if (!peer || !conn || !conn.open) {
+        alert('Not connected to any peer');
+        return;
+      }
 
-  try {
-    currentCallType = callType;
-    const constraints = {
-      audio: true, // Sempre habilitar áudio
-      video: callType === 'video' ? {
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        frameRate: { ideal: 30 }
-      } : false
-    };
+      try {
+        currentCallType = callType;
+        const constraints = {
+          audio: true,
+          video: callType === 'video' ? {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 }
+          } : false
+        };
 
-    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-    document.getElementById('localVideo').srcObject = currentStream;
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        document.getElementById('localVideo').srcObject = currentStream;
 
-    // Iniciar a chamada diretamente via PeerJS
-    call = peer.call(conn.peer, currentStream, {
-      metadata: { callType: callType }
-    });
+        // Iniciar a chamada diretamente via PeerJS
+        call = peer.call(conn.peer, currentStream, {
+          metadata: { callType: callType }
+        });
 
-    setupCallHandlers();
+        setupCallHandlers();
 
-    // Mostrar UI de chamada
-    $('#callContainer').addClass('active');
-    $('#remoteVideoLabel').text(currentContact?.name || conn.peer.substring(0, 8));
+        // Mostrar UI de chamada
+        $('#callContainer').addClass('active');
+        $('#remoteVideoLabel').text(currentContact?.name || conn.peer.substring(0, 8));
 
-    // Configurar controles
-    isMuted = false;
-    isVideoOff = callType === 'video' ? false : true;
-    updateCallControls();
+        // Configurar controles
+        isMuted = false;
+        isVideoOff = callType === 'video' ? false : true;
+        updateCallControls();
 
-  } catch (error) {
-    console.error('Error starting call:', error);
-    alert('Error starting call: ' + error.message);
-    endCall();
-  }
-}
+      } catch (error) {
+        console.error('Error starting call:', error);
+        alert('Error starting call: ' + error.message);
+        endCall();
+      }
+    }
 
     // Lidar com chamada recebida via conexão de dados (opcional)
     function handleIncomingCall(data) {
@@ -1549,40 +1549,40 @@ function initialize() {
 
     // Aceitar chamada
     async function acceptCall() {
-  if (!incomingCall) return;
-  
-  $('#callNotification').removeClass('active');
-  
-  try {
-    const constraints = {
-      audio: true, // Sempre habilitar áudio
-      video: currentCallType === 'video' ? {
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        frameRate: { ideal: 30 }
-      } : false
-    };
+      if (!incomingCall) return;
+      
+      $('#callNotification').removeClass('active');
+      
+      try {
+        const constraints = {
+          audio: true,
+          video: currentCallType === 'video' ? {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 }
+          } : false
+        };
 
-    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-    document.getElementById('localVideo').srcObject = currentStream;
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        document.getElementById('localVideo').srcObject = currentStream;
 
-    call = incomingCall;
-    call.answer(currentStream);
-    setupCallHandlers();
+        call = incomingCall;
+        call.answer(currentStream);
+        setupCallHandlers();
 
-    $('#callContainer').addClass('active');
-    $('#remoteVideoLabel').text(currentContact?.name || call.peer.substring(0, 8));
+        $('#callContainer').addClass('active');
+        $('#remoteVideoLabel').text(currentContact?.name || call.peer.substring(0, 8));
 
-    isMuted = false;
-    isVideoOff = currentCallType === 'video' ? false : true;
-    updateCallControls();
+        isMuted = false;
+        isVideoOff = currentCallType === 'video' ? false : true;
+        updateCallControls();
 
-  } catch (error) {
-    console.error('Error accepting call:', error);
-    alert('Error accepting call: ' + error.message);
-    endCall();
-  }
-}
+      } catch (error) {
+        console.error('Error accepting call:', error);
+        alert('Error accepting call: ' + error.message);
+        endCall();
+      }
+    }
 
     // Configurar handlers para chamada
     function setupCallHandlers() {
@@ -2225,4 +2225,4 @@ $('#infoModal').click(function(e) {
 });
   </script>
 </body>
-  </html>
+                                                             </html>
