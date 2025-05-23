@@ -1180,6 +1180,16 @@
     let currentCallType = null; // 'audio' or 'video'
     let incomingCall = null;
 
+    
+    // Verificar suporte a WebRTC
+if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+  alert('Your browser does not support video calls or is missing required permissions');
+}
+
+// Verificar suporte a PeerJS calls
+if (!Peer.prototype.call) {
+  alert('Your version of PeerJS does not support calls. Please update to latest version');
+}
     // Controle do menu lateral
     function openSidebar() {
       $('#sidebar').addClass('open');
@@ -1494,7 +1504,11 @@ function initialize() {
   try {
     currentCallType = callType;
     const constraints = {
-      audio: true, // Garantir que o áudio está ativo
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      },
       video: callType === 'video' ? {
         width: { ideal: 1280 },
         height: { ideal: 720 },
@@ -1503,7 +1517,9 @@ function initialize() {
     };
 
     currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-    document.getElementById('localVideo').srcObject = currentStream;
+    const localVideo = document.getElementById('localVideo');
+    localVideo.srcObject = currentStream;
+    localVideo.muted = true; // Sempre mudo para o vídeo local
 
     call = peer.call(conn.peer, currentStream, {
       metadata: { callType: callType }
@@ -1513,14 +1529,17 @@ function initialize() {
     $('#callContainer').addClass('active');
     $('#remoteVideoLabel').text(currentContact?.name || conn.peer.substring(0, 8));
 
-    // Resetar estados de mudo/vídeo
     isMuted = false;
     isVideoOff = callType === 'video' ? false : true;
     updateCallControls();
 
   } catch (error) {
     console.error('Error starting call:', error);
-    alert('Error starting call: ' + error.message);
+    if (error.name === 'NotAllowedError') {
+      alert('Please allow microphone and camera access to make calls');
+    } else {
+      alert('Error starting call: ' + error.message);
+    }
     endCall();
   }
 }
@@ -1584,29 +1603,34 @@ function initialize() {
 
     // Configurar handlers para chamada
     function setupCallHandlers() {
-      if (!call) return;
+  if (!call) return;
 
-      call.on('stream', (remoteStream) => {
-        document.getElementById('remoteVideo').srcObject = remoteStream;
-      });
+  call.on('stream', (remoteStream) => {
+    const remoteVideo = document.getElementById('remoteVideo');
+    remoteVideo.srcObject = remoteStream;
+    
+    // Garantir que o áudio não esteja mudo
+    remoteVideo.muted = false;
+    remoteVideo.volume = 1.0;
+  });
 
-      call.on('close', () => {
-        addMessage({
-          type: 'info',
-          author: call.peer,
-          authorName: currentContact?.name || call.peer.substring(0, 8),
-          timestamp: Date.now(),
-          content: 'Call ended'
-        });
-        endCall();
-      });
-      
-      call.on('error', (err) => {
-        console.error('Call error:', err);
-        alert('Call error: ' + err.message);
-        endCall();
-      });
-    }
+  call.on('close', () => {
+    addMessage({
+      type: 'info',
+      author: call.peer,
+      authorName: currentContact?.name || call.peer.substring(0, 8),
+      timestamp: Date.now(),
+      content: 'Call ended'
+    });
+    endCall();
+  });
+  
+  call.on('error', (err) => {
+    console.error('Call error:', err);
+    alert('Call error: ' + err.message);
+    endCall();
+  });
+}
 
     // Rejeitar chamada
     function rejectCall() {
@@ -2223,4 +2247,4 @@ $('#infoModal').click(function(e) {
 });
   </script>
 </body>
-  </html>
+                </html>
