@@ -1179,9 +1179,6 @@
     let isVideoOff = false;
     let currentCallType = null; // 'audio' or 'video'
     let incomingCall = null;
-    let call = null;
-    let currentStream = null;
-    let currentCallType = null;
 
     // Controle do menu lateral
     function openSidebar() {
@@ -1488,7 +1485,45 @@ function initialize() {
     // ==============================================
 
     // Iniciar uma chamada
- 
+    async function startCall(callType) {
+  if (!peer || !conn || !conn.open) {
+    alert('Not connected to any peer');
+    return;
+  }
+
+  try {
+    currentCallType = callType;
+    const constraints = {
+      audio: true, // Garantir que o áudio está ativo
+      video: callType === 'video' ? {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 30 }
+      } : false
+    };
+
+    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+    document.getElementById('localVideo').srcObject = currentStream;
+
+    call = peer.call(conn.peer, currentStream, {
+      metadata: { callType: callType }
+    });
+
+    setupCallHandlers();
+    $('#callContainer').addClass('active');
+    $('#remoteVideoLabel').text(currentContact?.name || conn.peer.substring(0, 8));
+
+    // Resetar estados de mudo/vídeo
+    isMuted = false;
+    isVideoOff = callType === 'video' ? false : true;
+    updateCallControls();
+
+  } catch (error) {
+    console.error('Error starting call:', error);
+    alert('Error starting call: ' + error.message);
+    endCall();
+  }
+}
 
     // Lidar com chamada recebida via conexão de dados (opcional)
     function handleIncomingCall(data) {
@@ -1510,7 +1545,43 @@ function initialize() {
     }
 
     // Aceitar chamada
-    
+    async function acceptCall() {
+  if (!incomingCall) return;
+  
+  $('#callNotification').removeClass('active');
+  
+  try {
+    const constraints = {
+      audio: true, // Garantir que o áudio está ativo
+      video: currentCallType === 'video' ? {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 30 }
+      } : false
+    };
+
+    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+    document.getElementById('localVideo').srcObject = currentStream;
+
+    call = incomingCall;
+    call.answer(currentStream);
+    setupCallHandlers();
+
+    $('#callContainer').addClass('active');
+    $('#remoteVideoLabel').text(currentContact?.name || call.peer.substring(0, 8));
+
+    // Resetar estados de mudo/vídeo
+    isMuted = false;
+    isVideoOff = currentCallType === 'video' ? false : true;
+    updateCallControls();
+
+  } catch (error) {
+    console.error('Error accepting call:', error);
+    alert('Error accepting call: ' + error.message);
+    endCall();
+  }
+}
+
     // Configurar handlers para chamada
     function setupCallHandlers() {
       if (!call) return;
@@ -1547,123 +1618,28 @@ function initialize() {
       call = null;
     }
 
-    // Variáveis globais (adicionar às existentes)
-
-
-// Função para iniciar chamada (substituir a existente)
-async function startCall(callType) {
-  if (!peer || !conn || !conn.open) {
-    alert('Not connected to any peer');
-    return;
-  }
-
-  try {
-    currentCallType = callType;
-    const constraints = {
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      },
-      video: callType === 'video' ? {
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        frameRate: { ideal: 30 }
-      } : false
-    };
-
-    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-    document.getElementById('localVideo').srcObject = currentStream;
-
-    call = peer.call(conn.peer, currentStream, {
-      metadata: { callType: callType }
-    });
-
-    call.on('stream', (remoteStream) => {
-      document.getElementById('remoteVideo').srcObject = remoteStream;
-    });
-
-    call.on('close', endCall);
-    call.on('error', endCall);
-
-    $('#callContainer').addClass('active');
-    $('#remoteVideoLabel').text(currentContact?.name || conn.peer.substring(0, 8));
-
-  } catch (error) {
-    console.error('Error starting call:', error);
-    alert('Error starting call: ' + error.message);
-    endCall();
-  }
-}
-
-// Função para aceitar chamada (substituir a existente)
-async function acceptCall() {
-  if (!incomingCall) return;
-  
-  $('#callNotification').removeClass('active');
-  
-  try {
-    const constraints = {
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      },
-      video: currentCallType === 'video' ? {
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        frameRate: { ideal: 30 }
-      } : false
-    };
-
-    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-    document.getElementById('localVideo').srcObject = currentStream;
-
-    call = incomingCall;
-    call.answer(currentStream);
-    
-    call.on('stream', (remoteStream) => {
-      document.getElementById('remoteVideo').srcObject = remoteStream;
-    });
-
-    $('#callContainer').addClass('active');
-    $('#remoteVideoLabel').text(currentContact?.name || call.peer.substring(0, 8));
-
-  } catch (error) {
-    console.error('Error accepting call:', error);
-    alert('Error accepting call: ' + error.message);
-    endCall();
-  }
-}
-
-// Função para finalizar chamada (substituir a existente)
-function endCall() {
-  if (call) {
-    call.close();
-    call = null;
-  }
-  
-  if (currentStream) {
-    currentStream.getTracks().forEach(track => track.stop());
-    currentStream = null;
-  }
-  
-  document.getElementById('localVideo').srcObject = null;
-  document.getElementById('remoteVideo').srcObject = null;
-  
-  $('#callContainer').removeClass('active');
-}
-
-// Handler para chamadas diretas (manter existente)
-function handleDirectIncomingCall(incomingCallObj) {
-  incomingCall = incomingCallObj;
-  currentCallType = incomingCall.metadata?.callType || 'video';
-  
-  const peerName = currentContact?.name || incomingCall.peer.substring(0, 8);
-  $('#callNotificationText').text(`Incoming ${currentCallType} call from ${peerName}`);
-  $('#callNotification').addClass('active');
-}
-    
+    // Finalizar chamada
+    function endCall() {
+      if (call) {
+        call.close();
+        call = null;
+      }
+      
+      if (incomingCall) {
+        incomingCall.close();
+        incomingCall = null;
+      }
+      
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+      }
+      
+      document.getElementById('localVideo').srcObject = null;
+      document.getElementById('remoteVideo').srcObject = null;
+      
+      $('#callContainer').removeClass('active');
+    }
 
     // Alternar mudo
     function toggleMute() {
