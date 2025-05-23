@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="../manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('../sw.js')
+        .then(() => console.log('Service Worker registrado com sucesso.'))
+        .catch(error => console.log('Erro ao registrar Service Worker:', error));
+    }
+  </script>
+  <link rel="icon" href="../icon-192.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Decentralized Chat</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.11.2/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #4361ee;
+      --primary-dark: #3a0ca3;
+      --success-color: #4cc9f0;
+      --warning-color: #f8961e;
+      --danger-color: #f72585;
+      --light-color: #f8f9fa;
+      --dark-color: #212529;
+      --gray-light: #e9ecef;
+      --sidebar-width: 300px;
+      --mobile-breakpoint: 768px;
+      
+      /* Dark mode variables */
+      --bg-color: #f5f7fa;
+      --text-color: #212529;
+      --card-bg: white;
+      --sidebar-bg: white;
+      --message-bg: #fafafa;
+      --user-message-bg: #e9f5ff;
+      --peer-message-bg: white;
+      --input-bg: white;
+      --border-color: #e9ecef;
+    }
+
+    .dark-mode {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --card-bg: #1e1e1e;
+      --sidebar-bg: #1e1e1e;
+      --message-bg: #252525;
+      --user-message-bg: #2a3a4a;
+      --peer-message-bg: #2d2d2d;
+      --input-bg: #2d2d2d;
+      --border-color: #333;
+    }
+
+    .dark-mode input.form-control,
+.dark-mode .form-control {
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.dark-mode .input-group-text {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.dark-mode .btn-outline-secondary {
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.dark-mode .btn-outline-secondary:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Layout Principal */
+    .app-container {
+      display: flex;
+      height: 100vh;
+      position: relative;
+      overflow-y: auto;
+    }
+
+    /* Barra Lateral */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+      position: fixed;
+      height: 100vh;
+      z-index: 100;
+      transition: transform 0.3s ease;
+      left: 0;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    /* Cabeçalho do Sidebar */
+    .sidebar-header {
+      display: flex;
+      height: 60px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--primary-color);
+      color: white;
+      flex-shrink: 0;
+      width: 100%;
+    }
+
+    .sidebar-header h5 {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .close-sidebar {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: white;
+      cursor: pointer;
+      display: block;
+      padding: 5px;
+    }
+
+    /* Conteúdo rolável da sidebar */
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: 0;
+      transition: margin-left 0.3s ease;
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    /* Navbar */
+    .navbar {
+      width: 100%;
+      height: 60px;
+      background: var(--primary-color);
+      padding: 15px;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+
+    .navbar-brand {
+      font-weight: 600;
+      color: white !important;
+      display: flex;
+      align-items: center;
+    }
+
+    .navbar-brand i {
+      margin-right: 10px;
+    }
+
+    /* Botão para abrir sidebar */
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.25rem;
+      margin-right: 15px;
+      display: block;
+      cursor: pointer;
+    }
+
+    /* Área de Mensagens */
+    .message-container {
+      flex: 1;
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      margin: 15px;
+      min-height: 0;
+      height: 83vh;
+    }
+
+    .message-header {
+      padding: 15px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    #messageBox {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background-color: var(--message-bg);
+      min-height: 0;
+    }
+
+    /* Input de Mensagem */
+    .message-input-container {
+      padding: 15px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    /* Estilos para mensagens */
+    .message {
+      margin: 8px 0;
+      padding: 10px 15px;
+      border-radius: 8px;
+      word-break: break-word;
+      max-width: 80%;
+      position: relative;
+    }
+
+    .user-message {
+      background-color: var(--user-message-bg);
+      border-left: 3px solid var(--primary-color);
+      margin-left: auto;
+    }
+
+    .peer-message {
+      background-color: var(--peer-message-bg);
+      border-left: 3px solid var(--border-color);
+    }
+
+    .timestamp {
+      font-size: 0.75rem;
+      color: #6c757d;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .message-author {
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    .user-message .message-author {
+      color: var(--primary-dark);
+    }
+
+    .peer-message .message-author {
+      color: var(--text-color);
+    }
+
+    /* Sidebar Sections */
+    .sidebar-section {
+      padding: 15px;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .sidebar-title i {
+      margin-right: 10px;
+      color: var(--primary-color);
+      transition: transform 0.2s;
+    }
+
+    .sidebar-title.collapsed i.fa-chevron-down {
+      transform: rotate(-90deg);
+    }
+
+    .collapsible-content {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      max-height: 0;
+    }
+
+    .collapsed + .collapsible-content {
+      max-height: 0 !important;
+    }
+
+    /* Status */
+    .status-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 15px;
+      background: rgba(0,0,0,0.03);
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 50px;
+    }
+
+    .badge-connected {
+      background-color: rgba(67, 97, 238, 0.1);
+      color: var(--primary-color);
+    }
+
+    .badge-disconnected {
+      background-color: rgba(248, 37, 133, 0.1);
+      color: var(--danger-color);
+    }
+
+    .badge-ready {
+      background-color: rgba(76, 201, 240, 0.1);
+      color: var(--success-color);
+    }
+
+    .status-icon {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-left: 8px;
+    }
+
+    .icon-connected {
+      background-color: var(--primary-color);
+    }
+
+    .icon-disconnected {
+      background-color: var(--danger-color);
+    }
+
+    .icon-ready {
+      background-color: var(--success-color);
+    }
+
+    /* Listas de Contatos e IDs */
+    .contact-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .contact-item {
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .contact-item:hover {
+      background-color: rgba(0,0,0,0.03);
+    }
+
+    .contact-item.active {
+      background-color: rgba(67, 97, 238, 0.1);
+    }
+
+    .contact-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .contact-name {
+      font-weight: 500;
+      color: var(--text-color);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .contact-id {
+      font-size: 0.75rem;
+      color: #6c757d;
+      font-family: 'Courier New', Courier, monospace;
+      word-break: break-all;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Botões de Ação */
+    .action-btn {
+      background: none;
+      border: none;
+      color: #6c757d;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 5px;
+      margin-left: 5px;
+    }
+
+    .action-btn:hover {
+      color: var(--primary-color);
+    }
+
+    .connect-btn:hover {
+      color: var(--success-color);
+    }
+
+    .delete-btn:hover {
+      color: var(--danger-color);
+    }
+
+    /* Formulários */
+    .form-group-sm label {
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Botão de Instalação */
+    #install-btn {
+      margin-top: 5px;
+      background: #0000FF80;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    /* Overlay para mobile */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 99;
+      display: none;
+    }
+
+    .sidebar-overlay.show {
+      display: block;
+    }
+
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+
+    /* Botão de limpar IDs */
+    .clear-btn {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+    }
+
+    /* Estilos para mensagens de arquivo */
+    .file-message {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      background-color: #f0f8ff;
+      border-radius: 8px;
+      margin: 5px 0;
+    }
+
+    .file-icon {
+      margin-right: 10px;
+      font-size: 1.5rem;
+    }
+
+    .file-info {
+      flex: 1;
+    }
+
+    .file-name {
+      font-weight: 500;
+      word-break: break-all;
+    }
+
+    .file-size {
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    .download-btn {
+      margin-left: 10px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .connection-status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #6c757d;
+      margin-left: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .connection-status-dot.connected {
+      background-color: #4cc9f0;
+      box-shadow: 0 0 8px rgba(76, 201, 240, 0.6);
+    }
+
+    .connection-status-dot.disconnected {
+      background-color: #f72585;
+    }
+
+    .connection-status-dot.ready {
+      background-color: #FFFF00;
+      box-shadow: 0 0 8px rgba(67, 97, 238, 0.6);
+    }
+
+    /* Estilo para os botões de export/import */
+    .btn-outline-secondary.clear-btn {
+      color: #6c757d;
+      border-color: #6c757d;
+    }
+
+    .btn-outline-secondary.clear-btn:hover {
+      color: #fff;
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+
+    /* Botão de tema escuro */
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+    }
+
+    /* Estilos para chamadas */
+    .call-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.9);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .call-container.active {
+      display: flex;
+    }
+
+    .video-container {
+      width: 100%;
+      max-width: 1200px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .video-box {
+      position: relative;
+      background: black;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+    }
+
+    .video-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-label {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0,0,0,0.5);
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .call-controls {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .call-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .call-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .answer-btn {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .hangup-btn {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .mute-btn {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .video-btn {
+      background-color: #17a2b8;
+      color: white;
+    }
+
+    /* Notificação de chamada */
+    .call-notification {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary-color);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      z-index: 1001;
+      display: none;
+      align-items: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      max-width: 90%;
+      width: 400px;
+    }
+
+    .call-notification.active {
+      display: flex;
+    }
+
+    .call-notification-buttons {
+      margin-left: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .notification-btn {
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .accept-btn {
+      background: #28a745;
+      color: white;
+    }
+
+    .reject-btn {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* Estilo para dark mode scrollbar */
+    .dark-mode ::-webkit-scrollbar-track {
+      background: #2d2d2d;
+    }
+
+    .dark-mode ::-webkit-scrollbar-thumb {
+      background: #555;
+    }
+
+    .dark-mode ::-webkit-scrollbar-thumb:hover {
+      background: #777;
+    }
+
+    /* Ajustes para dark mode em outros elementos */
+    .dark-mode .file-message {
+      background-color: #2a3a4a;
+    }
+
+    .dark-mode .file-size {
+      color: #aaa;
+    }
+
+    .dark-mode .status-container {
+      background-color: rgba(255,255,255,0.05);
+    }
+
+    .dark-mode .contact-item:hover {
+      background-color: rgba(255,255,255,0.05);
+    }
+
+    @media (max-width: 768px) {
+      .video-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .video-box {
+        max-height: 200px;
+      }
+      
+      .call-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1rem;
+      }
+      
+      .call-notification {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .call-notification-buttons {
+        margin-left: 0;
+        margin-top: 10px;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .sidebar-overlay {
+        display: none !important;
+      }
+      .main-content {
+        margin-left: 0;
+      }
+      .sidebar-toggle {
+        display: block;
+      }
+      .close-sidebar {
+        display: block;
+      }
+    }
+    
+    /* Estilos para o botão de informações */
+.info-toggle {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+/* Estilos para o modal de informações */
+.info-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 1001;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.info-modal.active {
+  display: flex;
+}
+
+.info-modal-content {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  border: 1px solid var(--border-color);
+}
+
+.info-modal-header {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background-color: var(--card-bg);
+  z-index: 1;
+}
+
+.info-modal-header h5 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.close-info-modal {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.info-modal-body {
+  padding: 15px;
+}
+
+.info-modal-body h6 {
+  margin-top: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.info-modal-body ul {
+  padding-left: 20px;
+}
+
+.info-modal-body ul li {
+  margin-bottom: 5px;
+}
+
+.version-info {
+  margin-top: 20px;
+  text-align: right;
+  color: #6c757d;
+}
+
+/* Estilos para os botões do cabeçalho */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 12px; /* Espaçamento igual entre os botões */
+  align-items: center;
+}
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Barra Lateral -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h5><i class="fas fa-comments mr-2"></i>Menu</h5>
+        
+            <button class="info-toggle" id="infoToggle" title="App information">
+      <i class="fas fa-info-circle"></i>
+    </button>
+        	<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+          </button>
+        <button class="close-sidebar" id="closeSidebar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="sidebar-content">
+        <!-- Seção de Status -->
+        <div class="sidebar-section">
+          <div class="status-container">
+            <div>
+              <span id="status" class="status-badge badge-disconnected">Disconnected</span>
+              <span id="status-icon" class="status-icon icon-disconnected"></span>
+            </div>
+            <button id="reconnectButton" class="btn btn-sm btn-outline-primary">
+              <i class="fas fa-power-off"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Seção de Identidade -->
+        <div class="sidebar-section">
+          <h5 class="sidebar-title"><i class="fas fa-user"></i> My Identity</h5>
+          <div class="form-group form-group-sm">
+            <label>ID:</label>
+            <div class="input-group mb-2">
+              <input id="uid" type="text" class="form-control form-control-sm" placeholder="Enter or generate">
+              <div class="input-group-append">
+                <button id="generateId" class="btn btn-outline-secondary btn-sm" title="Generate random ID">
+                  <i class="fas fa-random"></i>
+                </button>
+                <button id="copyGeneratedId" class="btn btn-outline-primary btn-sm" title="Copy ID">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group form-group-sm">
+            <label>Display Name:</label>
+            <input id="myIdName" type="text" class="form-control form-control-sm" placeholder="Your name">
+          </div>
+        </div>
+
+        <!-- Seção de Conexão -->
+        <div class="sidebar-section">
+          <h5 class="sidebar-title"><i class="fas fa-link"></i> Connect to Peer</h5>
+          <div class="form-group form-group-sm">
+            <label>Peer ID:</label>
+            <div class="input-group mb-2">
+              <input id="rid" type="text" class="form-control form-control-sm" placeholder="ID to connect">
+              <div class="input-group-append">
+                <button id="rid-button" class="btn btn-primary btn-sm">
+                  <i class="fas fa-link"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group form-group-sm">
+            <label>Save as Contact:</label>
+            <div class="input-group">
+              <input id="contactName" type="text" class="form-control form-control-sm" placeholder="Contact name">
+              <div class="input-group-append">
+                <button id="saveContact" class="btn btn-success btn-sm">
+                  <i class="fas fa-save"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seção de Contatos (recolhível) -->
+        <div class="sidebar-section">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="sidebar-title collapsed" id="contactsTitle"><i class="fas fa-chevron-down"></i><i class="fas fa-users ml-2"></i> Contacts</h5>
+            <div>
+              <button class="btn btn-sm btn-outline-secondary clear-btn mr-1 mb-1" id="exportContacts" title="Export contacts">
+                <i class="fas fa-file-export"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary clear-btn mr-1 mb-1" id="importContacts" title="Import contacts">
+                <i class="fas fa-file-import"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger clear-btn mb-1" id="clearAllContacts">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="collapsible-content" id="contactsContent">
+            <ul id="contactsList" class="contact-list"></ul>
+          </div>
+        </div>
+
+        <!-- Seção de Meus IDs (recolhível) -->
+        <div class="sidebar-section">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="sidebar-title collapsed" id="myIdsTitle"><i class="fas fa-chevron-down"></i><i class="fas fa-id-card ml-2"></i> My IDs</h5>
+            <div>
+              <button class="btn btn-sm btn-outline-secondary clear-btn mr-1 mb-1" id="exportMyIds" title="Export my IDs">
+                <i class="fas fa-file-export"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary clear-btn mr-1 mb-1" id="importMyIds" title="Import my IDs">
+                <i class="fas fa-file-import"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger clear-btn mb-1" id="clearAllIds">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="collapsible-content" id="myIdsContent">
+            <ul id="myIdsList" class="contact-list"></ul>
+          </div>
+        </div>
+          <!-- Botão de Instalação -->
+          <button id="install-btn">Install App</button>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+      </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-content">
+      <!-- Navbar -->
+      <nav class="navbar navbar-expand navbar-light">
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <a class="navbar-brand">
+          <i class="fas fa-comments"></i>Destal &nbsp;<small>Decentralized Chat</small>
+        </a>
+        <div class="ml-auto d-flex align-items-center">
+         
+          <div id="connectionStatus" class="connection-status-dot"></div>
+        </div>
+      </nav>
+
+      <!-- Área de Mensagens -->
+      <div class="container-fluid p-0">
+        <div class="message-container">
+          <div class="message-header">
+            <h5 class="mb-0"><i class="fas fa-comments mr-2" style="color: var(--primary-color);"></i>Messages</h5>
+            <div>
+              <button id="audioCallBtn" class="btn btn-sm btn-success mr-2" title="Start audio call">
+                <i class="fas fa-phone"></i>
+              </button>
+              <button id="videoCallBtn" class="btn btn-sm btn-primary" title="Start video call">
+                <i class="fas fa-video"></i>
+              </button>
+            </div>
+          </div>
+          <div id="messageBox"></div>
+          <div class="message-input-container">
+            <div class="input-group">
+              <input id="messageText" type="text" class="form-control" placeholder="Type your message..." autofocus>
+              <div class="input-group-append">
+                <button id="fileSelect" class="btn btn-outline-secondary" title="Send file">
+                  <i class="fas fa-paperclip"></i>
+                </button>
+                <button id="messageSend" class="btn btn-primary">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+            <input type="file" id="fileInput" style="display: none;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay para mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  </div>
+
+  <!-- Contêiner para chamadas -->
+  <div class="call-container" id="callContainer">
+    <div class="video-container">
+      <div class="video-box">
+        <video id="localVideo" autoplay muted playsinline></video>
+        <div class="video-label">You</div>
+      </div>
+      <div class="video-box">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="video-label" id="remoteVideoLabel">Peer</div>
+      </div>
+    </div>
+    <div class="call-controls">
+      <button class="call-btn hangup-btn" id="hangupBtn" title="Hang up">
+        <i class="fas fa-phone-slash"></i>
+      </button>
+      <button class="call-btn mute-btn" id="muteBtn" title="Mute">
+        <i class="fas fa-microphone"></i>
+      </button>
+      <button class="call-btn video-btn" id="videoToggleBtn" title="Toggle video">
+        <i class="fas fa-video"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Notificação de chamada -->
+  <div class="call-notification" id="callNotification">
+    <div id="callNotificationText">Incoming call</div>
+    <div class="call-notification-buttons">
+      <button class="notification-btn accept-btn" id="acceptCallBtn">
+        <i class="fas fa-phone"></i> Accept
+      </button>
+      <button class="notification-btn reject-btn" id="rejectCallBtn">
+        <i class="fas fa-phone-slash"></i> Reject
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal de Informações -->
+<div class="info-modal" id="infoModal">
+  <div class="info-modal-content">
+    <div class="info-modal-header">
+      <h5><i class="fas fa-info-circle mr-2"></i>About Destal Chat</h5>
+      <button class="close-info-modal" id="closeInfoModal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="info-modal-body">
+      <p>Destal is a decentralized peer-to-peer chat application that works directly between browsers without central servers.</p>
+      <p>Due to the nature of decentralization, when you close the connection the entire conversation is deleted.</p>
+      <h6><i class="fas fa-shield-alt mr-2"></i>Privacy</h6>
+      <p>All communication is end-to-end encrypted. Your data never passes through our servers.</p>
+      
+      <h6><i class="fas fa-code mr-2"></i>Technology</h6>
+      <p>Developed with advanced real-time communication technology and direct connections between users.</p>
+      
+      <h6><i class="fas fa-heart mr-2"></i>Features</h6>
+      <ul>
+        <li>Text messaging</li>
+        <li>File sharing</li>
+        <li>Audio/video calls</li>
+        <li>Dark/light mode</li>
+        <li>App available</li>
+      </ul>
+      
+      <div class="version-info">
+        <small>Version: 1.2.4</small>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <!-- Input oculto para importação -->
+  <input type="file" id="importFileInput" accept=".json" style="display: none;">
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <script>
+  $(document).ready(function () {
+    let peer = null, conn = null, last_peer = null;
+    let currentContact = null;
+    let call = null;
+    let currentStream = null;
+    let isMuted = false;
+    let isVideoOff = false;
+    let currentCallType = null; // 'audio' or 'video'
+    let incomingCall = null;
+
+    // Controle do menu lateral
+    function openSidebar() {
+      $('#sidebar').addClass('open');
+      $('#sidebarOverlay').addClass('show');
+      $('body').css('overflow', 'hidden');
+    }
+
+    function closeSidebar() {
+      $('#sidebar').removeClass('open');
+      $('#sidebarOverlay').removeClass('show');
+      $('body').css('overflow', '');
+    }
+
+    // Eventos para abrir/fechar o menu
+    $('#sidebarToggle').click(openSidebar);
+    $('#closeSidebar').click(closeSidebar);
+    $('#sidebarOverlay').click(closeSidebar);
+
+    // Controle das seções recolhíveis
+    $('#contactsTitle').click(function() {
+      $(this).toggleClass('collapsed');
+      $('#contactsContent').css('max-height', $(this).hasClass('collapsed') ? '0' : $('#contactsList').height() + 'px');
+    });
+
+    $('#myIdsTitle').click(function() {
+      $(this).toggleClass('collapsed');
+      $('#myIdsContent').css('max-height', $(this).hasClass('collapsed') ? '0' : $('#myIdsList').height() + 'px');
+    });
+
+    // Atualizar status
+    function setStatus(text, color, statusClass) {
+      $('#status').text(text);
+      $('#status-icon').removeClass('icon-connected icon-ready icon-disconnected').addClass('icon-' + color);
+      $('#status').removeClass('badge-connected badge-ready badge-disconnected').addClass(statusClass);
+      
+      // Atualiza a bolinha de status na navbar
+      const $statusDot = $('#connectionStatus');
+      $statusDot.removeClass('connected disconnected ready');
+      
+      if (text === 'Connected') {
+        $statusDot.addClass('connected');
+      } else if (text === 'Ready to connect') {
+        $statusDot.addClass('ready');
+      } else {
+        $statusDot.addClass('disconnected');
+      }
+    }
+
+    // Obter timestamp formatado
+    function getTimestamp(ms) {
+      const d = new Date(ms);
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    // Adicionar mensagem ao chat
+    function addMessage(msg) {
+      if (msg.type === 'file') {
+        displayFileMessage(msg);
+      } else if (msg.type === 'call') {
+        // Não exibir mensagens de chamada no chat
+        return;
+      } else {
+        const isCurrentUser = msg.author === peer?.id;
+        const authorName = isCurrentUser ? 
+          'You' : 
+          (msg.authorName || msg.author.substring(0, 8));
+        
+        const messageType = msg.type === 'info' ? 'info-message' : 'text-message';
+        
+        const messageHTML = `
+          <div class="message ${isCurrentUser ? 'user-message' : 'peer-message'} ${messageType}">
+            <span class="timestamp">${getTimestamp(msg.timestamp)}</span>
+            <div class="message-author">${authorName}</div>
+            ${msg.type === 'info' ? 'connected' : msg.content}
+          </div>
+        `;
+        
+        $('#messageBox').append(messageHTML);
+      }
+      $('#messageBox').scrollTop($('#messageBox')[0].scrollHeight);
+    }
+
+    // Função para exibir mensagens de arquivo
+    function displayFileMessage(msg, isSender = false) {
+      const isCurrentUser = msg.author === peer?.id;
+      const authorName = isCurrentUser ? 
+        'You' : 
+        (msg.authorName || msg.author.substring(0, 8));
+      
+      // Formatando o tamanho do arquivo
+      const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      };
+
+      const fileHTML = `
+        <div class="message ${isCurrentUser ? 'user-message' : 'peer-message'}">
+          <span class="timestamp">${getTimestamp(msg.timestamp)}</span>
+          <div class="message-author">${authorName}</div>
+          <div class="file-message">
+            <div class="file-icon">
+              <i class="fas ${getFileIcon(msg.file.type)}"></i>
+            </div>
+            <div class="file-info">
+              <div class="file-name">${msg.file.name}</div>
+              <div class="file-size">${formatFileSize(msg.file.size)}</div>
+            </div>
+            ${!isSender ? `<button class="download-btn" onclick="downloadFile('${msg.file.name.replace(/'/g, "\\'")}', '${msg.file.data.replace(/'/g, "\\'")}')">
+              <i class="fas fa-download"></i> Download
+            </button>` : ''}
+          </div>
+        </div>
+      `;
+      
+      $('#messageBox').append(fileHTML);
+    }
+
+    // Função para obter ícone baseado no tipo de arquivo
+    function getFileIcon(fileType) {
+      if (!fileType) return 'fa-file';
+      
+      const type = fileType.split('/')[0];
+      const subtype = fileType.split('/')[1];
+      
+      const icons = {
+        image: 'fa-file-image',
+        audio: 'fa-file-audio',
+        video: 'fa-file-video',
+        application: {
+          pdf: 'fa-file-pdf',
+          msword: 'fa-file-word',
+          'vnd.openxmlformats-officedocument.wordprocessingml.document': 'fa-file-word',
+          'vnd.ms-excel': 'fa-file-excel',
+          'vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'fa-file-excel',
+          'vnd.ms-powerpoint': 'fa-file-powerpoint',
+          'vnd.openxmlformats-officedocument.presentationml.presentation': 'fa-file-powerpoint',
+          zip: 'fa-file-archive',
+          'x-rar-compressed': 'fa-file-archive',
+          'x-7z-compressed': 'fa-file-archive'
+        },
+        text: 'fa-file-alt'
+      };
+      
+      if (icons[type]) {
+        if (type === 'application' && icons.application[subtype]) {
+          return icons.application[subtype];
+        }
+        return icons[type];
+      }
+      
+      return 'fa-file';
+    }
+
+    // Criar objeto de mensagem
+    function createMessage(content) {
+      return { 
+        author: peer?.id, 
+        authorName: $('#myIdName').val().trim() || peer?.id.substring(0, 8),
+        timestamp: Date.now(), 
+        content,
+        type: 'message'
+      };
+    }
+
+    // Configurar conexão
+    function ready() {
+      conn.on('open', () => {
+        setStatus('Connected', 'connected', 'badge-connected');
+        $('#rid').val(conn.peer);
+        
+        // Enviar mensagem de info
+        conn.send({
+          type: 'info',
+          author: peer.id,
+          authorName: $('#myIdName').val().trim() || peer.id.substring(0, 8),
+          timestamp: Date.now()
+        });
+
+        // Atualizar contato ativo
+        const contacts = JSON.parse(localStorage.getItem('contacts') || '[]');
+        currentContact = contacts.find(c => c.id === conn.peer);
+        updateContactsList();
+      });
+
+      conn.on('data', (data) => {
+        if (data.type === 'call') {
+          handleIncomingCall(data);
+        } else {
+          addMessage(data);
+        }
+      });
+      
+      conn.on('close', () => {
+        conn = null;
+        currentContact = null;
+        setStatus('Connection closed', 'disconnected', 'badge-disconnected');
+        updateContactsList();
+        endCall();
+      });
+    }
+
+    // Inicializar Peer
+function initialize() {
+  const customId = $('#uid').val().trim();
+  
+  // Configurações dos servidores (seu servidor primeiro, depois fallback público)
+  const servers = [
+    {
+      host: 'servidor-pn0h.onrender.com',
+      port: 443,
+      secure: true,
+      path: '/',
+      label: 'Custom Server'
+    },
+    {
+      host: '0.peerjs.com',
+      port: 443,
+      secure: true,
+      path: '/',
+      label: 'Public Backup Server'
+    }
+  ];
+
+  // Destruir instância anterior se existir
+  if (peer) {
+    peer.destroy();
+    setStatus('Reconnecting...', 'disconnected', 'badge-disconnected');
+  }
+
+  // Tentar conectar a cada servidor sequencialmente
+  let currentServerIndex = 0;
+  
+  function tryConnect() {
+    if (currentServerIndex >= servers.length) {
+      setStatus('All servers failed', 'disconnected', 'badge-disconnected');
+      alert('Could not connect to any PeerJS server. Please check your internet connection.');
+      return;
+    }
+
+    const server = servers[currentServerIndex];
+    console.log(`Trying to connect to ${server.label}...`);
+    setStatus(`Connecting to ${server.label}...`, 'disconnected', 'badge-disconnected');
+
+    const peerOptions = {
+      host: server.host,
+      port: server.port,
+      secure: server.secure,
+      path: server.path,
+      debug: 3
+    };
+
+    peer = customId ? new Peer(customId, peerOptions) : new Peer(peerOptions);
+
+    peer.on('open', id => {
+      console.log(`Connected to ${server.label} with ID:`, id);
+      $('#uid').val(id);
+      last_peer = id;
+      setStatus(`Ready (${server.label})`, 'ready', 'badge-ready');
+      saveMyId(id, $('#myIdName').val().trim() || `My ID ${id.substring(0, 4)}`);
+      updateMyIdsList();
+    });
+
+    peer.on('error', err => {
+      console.error(`${server.label} error:`, err);
+      
+      // Ignorar erros específicos que não requerem troca de servidor
+      if (err.type !== 'peer-unavailable' && err.type !== 'invalid-id') {
+        currentServerIndex++;
+        setTimeout(tryConnect, 1000); // Tentar próximo servidor após 1 segundo
+      }
+    });
+
+    // Configurar outros handlers como antes
+    peer.on('connection', c => {
+      if (conn) { c.close(); return; }
+      conn = c;
+      ready();
+    });
+
+    peer.on('disconnected', () => {
+      peer.id = last_peer;
+      peer.reconnect();
+    });
+
+    peer.on('close', () => {
+      conn = null;
+      setStatus('Connection closed', 'disconnected', 'badge-disconnected');
+      endCall();
+    });
+
+    peer.on('call', handleDirectIncomingCall);
+  }
+
+  // Iniciar o processo de conexão
+  tryConnect();
+}
+
+    // ==============================================
+    // Funções para chamadas de vídeo/áudio
+    // ==============================================
+
+    // Iniciar uma chamada
+    async function startCall(callType) {
+      if (!peer || !conn || !conn.open) {
+        alert('Not connected to any peer');
+        return;
+      }
+
+      try {
+        currentCallType = callType;
+        const constraints = {
+          audio: true,
+          video: callType === 'video' ? {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 }
+          } : false
+        };
+
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        document.getElementById('localVideo').srcObject = currentStream;
+
+        // Iniciar a chamada diretamente via PeerJS
+        call = peer.call(conn.peer, currentStream, {
+          metadata: { callType: callType }
+        });
+
+        setupCallHandlers();
+
+        // Mostrar UI de chamada
+        $('#callContainer').addClass('active');
+        $('#remoteVideoLabel').text(currentContact?.name || conn.peer.substring(0, 8));
+
+        // Configurar controles
+        isMuted = false;
+        isVideoOff = callType === 'video' ? false : true;
+        updateCallControls();
+
+      } catch (error) {
+        console.error('Error starting call:', error);
+        alert('Error starting call: ' + error.message);
+        endCall();
+      }
+    }
+
+    // Lidar com chamada recebida via conexão de dados (opcional)
+    function handleIncomingCall(data) {
+      if (data.type !== 'call') return;
+      
+      // Esta função é para chamadas mediadas por conexão de dados
+      // No nosso caso, estamos usando chamadas diretas do PeerJS
+      // Pode ser removida se não for usar
+    }
+
+    // Lidar com chamada direta recebida (PeerJS)
+    function handleDirectIncomingCall(incomingCallObj) {
+      incomingCall = incomingCallObj;
+      currentCallType = incomingCall.metadata?.callType || 'video';
+      
+      const peerName = currentContact?.name || incomingCall.peer.substring(0, 8);
+      $('#callNotificationText').text(`Incoming ${currentCallType} call from ${peerName}`);
+      $('#callNotification').addClass('active');
+    }
+
+    // Aceitar chamada
+    async function acceptCall() {
+      if (!incomingCall) return;
+      
+      $('#callNotification').removeClass('active');
+      
+      try {
+        const constraints = {
+          audio: true,
+          video: currentCallType === 'video' ? {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 }
+          } : false
+        };
+
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        document.getElementById('localVideo').srcObject = currentStream;
+
+        call = incomingCall;
+        call.answer(currentStream);
+        setupCallHandlers();
+
+        $('#callContainer').addClass('active');
+        $('#remoteVideoLabel').text(currentContact?.name || call.peer.substring(0, 8));
+
+        isMuted = false;
+        isVideoOff = currentCallType === 'video' ? false : true;
+        updateCallControls();
+
+      } catch (error) {
+        console.error('Error accepting call:', error);
+        alert('Error accepting call: ' + error.message);
+        endCall();
+      }
+    }
+
+    // Configurar handlers para chamada
+    function setupCallHandlers() {
+      if (!call) return;
+
+      call.on('stream', (remoteStream) => {
+        document.getElementById('remoteVideo').srcObject = remoteStream;
+      });
+
+      call.on('close', () => {
+        addMessage({
+          type: 'info',
+          author: call.peer,
+          authorName: currentContact?.name || call.peer.substring(0, 8),
+          timestamp: Date.now(),
+          content: 'Call ended'
+        });
+        endCall();
+      });
+      
+      call.on('error', (err) => {
+        console.error('Call error:', err);
+        alert('Call error: ' + err.message);
+        endCall();
+      });
+    }
+
+    // Rejeitar chamada
+    function rejectCall() {
+      $('#callNotification').removeClass('active');
+      if (incomingCall) {
+        incomingCall.close();
+      }
+      incomingCall = null;
+      call = null;
+    }
+
+    // Finalizar chamada
+    function endCall() {
+      if (call) {
+        call.close();
+        call = null;
+      }
+      
+      if (incomingCall) {
+        incomingCall.close();
+        incomingCall = null;
+      }
+      
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+      }
+      
+      document.getElementById('localVideo').srcObject = null;
+      document.getElementById('remoteVideo').srcObject = null;
+      
+      $('#callContainer').removeClass('active');
+    }
+
+    // Alternar mudo
+    function toggleMute() {
+      if (!currentStream) return;
+      
+      const audioTracks = currentStream.getAudioTracks();
+      if (audioTracks.length > 0) {
+        isMuted = !isMuted;
+        audioTracks[0].enabled = !isMuted;
+        updateCallControls();
+      }
+    }
+
+    // Alternar vídeo
+    function toggleVideo() {
+      if (!currentStream || currentCallType !== 'video') return;
+      
+      const videoTracks = currentStream.getVideoTracks();
+      if (videoTracks.length > 0) {
+        isVideoOff = !isVideoOff;
+        videoTracks[0].enabled = !isVideoOff;
+        updateCallControls();
+      }
+    }
+
+    // Atualizar controles de chamada
+    function updateCallControls() {
+      $('#muteBtn').html(isMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>');
+      $('#muteBtn').attr('title', isMuted ? 'Unmute' : 'Mute');
+      
+      $('#videoToggleBtn').html(isVideoOff ? '<i class="fas fa-video-slash"></i>' : '<i class="fas fa-video"></i>');
+      $('#videoToggleBtn').attr('title', isVideoOff ? 'Enable video' : 'Disable video');
+    }
+
+    // ==============================================
+    // Configuração de eventos para chamadas
+    // ==============================================
+
+    // Iniciar chamada de áudio
+    $('#audioCallBtn').click(() => {
+      if ($('#callContainer').hasClass('active')) {
+        endCall();
+      } else {
+        startCall('audio');
+      }
+    });
+
+    // Iniciar chamada de vídeo
+    $('#videoCallBtn').click(() => {
+      if ($('#callContainer').hasClass('active')) {
+        endCall();
+      } else {
+        startCall('video');
+      }
+    });
+
+    // Aceitar chamada
+    $('#acceptCallBtn').click(acceptCall);
+
+    // Rejeitar chamada
+    $('#rejectCallBtn').click(rejectCall);
+
+    // Finalizar chamada
+    $('#hangupBtn').click(endCall);
+
+    // Alternar mudo
+    $('#muteBtn').click(toggleMute);
+
+    // Alternar vídeo
+    $('#videoToggleBtn').click(toggleVideo);
+
+    // ==============================================
+    // Configuração do tema escuro
+    // ==============================================
+
+    // Alternar tema escuro
+    function toggleDarkMode() {
+      $('body').toggleClass('dark-mode');
+      const isDark = $('body').hasClass('dark-mode');
+      localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+      $('#themeToggle').html(isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>');
+      $('#themeToggle').attr('title', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+
+    // Verificar preferência de tema salva
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      $('body').addClass('dark-mode');
+      $('#themeToggle').html('<i class="fas fa-sun"></i>');
+      $('#themeToggle').attr('title', 'Switch to light mode');
+    }
+
+    // Evento para alternar tema
+    $('#themeToggle').click(toggleDarkMode);
+
+    // ==============================================
+    // Restante do código existente
+    // ==============================================
+
+    // Configurar o seletor de arquivos
+    $('#fileSelect').click(() => $('#fileInput').click());
+
+    $('#fileInput').change(function() {
+      if (!conn || !conn.open) {
+        alert('Not connected to any peer');
+        return;
+      }
+
+      const file = this.files[0];
+      if (!file) return;
+
+      // Criar um blob URL para o arquivo
+      const blobUrl = URL.createObjectURL(file);
+
+      // Criar mensagem de arquivo
+      const fileMessage = {
+        type: 'file',
+        author: peer.id,
+        authorName: $('#myIdName').val().trim() || peer.id.substring(0, 8),
+        timestamp: Date.now(),
+        file: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          blobUrl: blobUrl,
+          data: null
+        }
+      };
+
+      // Enviar o arquivo usando a conexão de dados
+      const fileReader = new FileReader();
+      fileReader.onload = function(event) {
+        fileMessage.file.data = event.target.result;
+        conn.send(fileMessage);
+        
+        // Mostrar a mensagem no chat
+        displayFileMessage(fileMessage, true);
+      };
+      fileReader.readAsDataURL(file);
+
+      // Limpar o input de arquivo
+      $(this).val('');
+    });
+
+    // Gerar ID aleatório
+    $('#generateId').click(() => {
+      const randomId = 'user-' + Math.random().toString(36).substring(2, 10);
+      $('#uid').val(randomId);
+      $('#myIdName').val(`User ${randomId.substring(5, 9)}`);
+      showCopiedFeedback($('#copyGeneratedId'));
+    });
+
+    // Copiar ID gerado
+    $('#copyGeneratedId').click(function() {
+      const id = $('#uid').val().trim();
+      if (id) {
+        copyToClipboard(id, $(this));
+      } else {
+        alert('No ID to copy');
+      }
+    });
+
+    // Iniciar conexão Peer
+    $('#reconnectButton').click(initialize);
+
+    // Conectar a um peer
+    $('#rid-button').click(() => {
+      if (conn) conn.close();
+      const id = $('#rid').val().trim();
+      if (!id) return alert('Enter a Peer ID');
+      conn = peer.connect(id, { reliable: true });
+      setStatus('Connecting...', 'disconnected', 'badge-disconnected');
+      ready();
+    });
+
+    // Enviar mensagem
+    $('#messageSend').click(() => {
+      const text = $('#messageText').val().trim();
+      if (!text) return;
+      const msg = createMessage(text);
+      if (conn?.open) {
+        conn.send(msg);
+        addMessage(msg);
+        $('#messageText').val('').focus();
+      } else {
+        alert('Not connected to any peer');
+      }
+    });
+
+    // Enviar mensagem com Enter
+    $('#messageText').keypress(e => e.which === 13 && $('#messageSend').click());
+
+    // Salvar contato
+    $('#saveContact').click(() => {
+      const name = $('#contactName').val().trim();
+      const id = $('#rid').val().trim();
+      if (!name) return alert('Enter contact name');
+      if (!id) return alert('Enter peer ID');
+      
+      const contacts = JSON.parse(localStorage.getItem('contacts') || '[]');
+      const existingContact = contacts.find(c => c.id === id);
+      
+      if (existingContact) {
+        existingContact.name = name;
+      } else {
+        contacts.push({ name, id });
+      }
+      
+      localStorage.setItem('contacts', JSON.stringify(contacts));
+      updateContactsList();
+      $('#contactName').val('');
+    });
+
+    // Salvar meu ID
+    function saveMyId(id, name) {
+      const ids = JSON.parse(localStorage.getItem('myids') || '[]');
+      const existingId = ids.find(i => i.id === id);
+      
+      if (existingId) {
+        existingId.name = name;
+      } else {
+        ids.push({ id, name });
+      }
+      
+      localStorage.setItem('myids', JSON.stringify(ids));
+      updateMyIdsList();
+    }
+
+    // Atualizar lista de IDs
+    function updateMyIdsList() {
+      const ids = JSON.parse(localStorage.getItem('myids') || '[]');
+      $('#myIdsList').html(ids.map(i => 
+        `<li class="contact-item ${peer?.id === i.id ? 'active' : ''}" data-id="${i.id}">
+          <div class="contact-info" onclick="$('#uid').val('${i.id}'); $('#myIdName').val('${i.name.replace(/'/g, "\\'")}')">
+            <div class="contact-name">${i.name}</div>
+            <div class="contact-id">${i.id}</div>
+          </div>
+          <div>
+            <button class="action-btn connect-btn" onclick="$('#uid').val('${i.id}'); $('#myIdName').val('${i.name.replace(/'/g, "\\'")}')" title="Use this ID">
+              <i class="fas fa-check"></i>
+            </button>
+            <button class="action-btn copy-btn" data-id="${i.id}" title="Copy ID">
+              <i class="fas fa-copy"></i>
+            </button>
+            <button class="action-btn delete-btn" onclick="deleteMyId('${i.id.replace(/'/g, "\\'")}')" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </li>`
+      ).join('') || '<li class="text-muted p-2">No saved IDs</li>');
+    }
+
+    // Atualizar lista de contatos
+    function updateContactsList() {
+      const contacts = JSON.parse(localStorage.getItem('contacts') || '[]');
+      $('#contactsList').html(contacts.map(c => 
+        `<li class="contact-item ${currentContact?.id === c.id ? 'active' : ''}" data-id="${c.id}">
+          <div class="contact-info" onclick="$('#rid').val('${c.id}'); $('#contactName').val('${c.name.replace(/'/g, "\\'")}')">
+            <div class="contact-name">${c.name}</div>
+            <div class="contact-id">${c.id}</div>
+          </div>
+          <div>
+            <button class="action-btn connect-btn" onclick="$('#rid').val('${c.id}')" title="Connect to this peer">
+              <i class="fas fa-link"></i>
+            </button>
+            <button class="action-btn copy-btn" data-id="${c.id}" title="Copy ID">
+              <i class="fas fa-copy"></i>
+            </button>
+            <button class="action-btn delete-btn" onclick="deleteContact('${c.id.replace(/'/g, "\\'")}')" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </li>`
+      ).join('') || '<li class="text-muted p-2">No contacts saved</li>');
+    }
+
+    // Deletar meu ID
+    window.deleteMyId = function(id) {
+      if (confirm('Are you sure you want to delete this ID?')) {
+        let ids = JSON.parse(localStorage.getItem('myids') || '[]');
+        ids = ids.filter(i => i.id !== id);
+        localStorage.setItem('myids', JSON.stringify(ids));
+        updateMyIdsList();
+        
+        if (peer?.id === id) {
+          peer.destroy();
+          peer = null;
+          setStatus('Disconnected', 'disconnected', 'badge-disconnected');
+        }
+      }
+    }
+
+    // Deletar contato
+    window.deleteContact = function(id) {
+      if (confirm('Are you sure you want to delete this contact?')) {
+        let contacts = JSON.parse(localStorage.getItem('contacts') || '[]');
+        contacts = contacts.filter(c => c.id !== id);
+        localStorage.setItem('contacts', JSON.stringify(contacts));
+        updateContactsList();
+        
+        if (currentContact?.id === id) {
+          if (conn) conn.close();
+          currentContact = null;
+        }
+      }
+    }
+
+    // Função para download de arquivo
+    window.downloadFile = function(filename, dataURL) {
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = filename;
+      link.click();
+    };
+
+    // Copiar para área de transferência
+    window.copyToClipboard = function(text, $element) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          showCopiedFeedback($element);
+        }).catch(err => {
+          fallbackCopy(text, $element);
+        });
+      } else {
+        fallbackCopy(text, $element);
+      }
+    }
+
+    // Fallback para copiar
+    function fallbackCopy(text, $element) {
+      try {
+        const $temp = $('<textarea>').val(text).appendTo('body').select();
+        const success = document.execCommand('copy');
+        $temp.remove();
+        if (success) {
+          showCopiedFeedback($element);
+        } else {
+          alert('Failed to copy text. Please copy manually: ' + text);
+        }
+      } catch (err) {
+        alert('Failed to copy text. Please copy manually: ' + text);
+      }
+    }
+
+    // Mostrar feedback de cópia
+    function showCopiedFeedback($element) {
+      const originalHtml = $element.html();
+      $element.html('<i class="fas fa-check"></i>');
+      setTimeout(() => {
+        $element.html(originalHtml);
+      }, 1000);
+    }
+
+    // Limpar todos os IDs
+    $('#clearAllIds').click(function() {
+      if (confirm('Are you sure you want to delete all your IDs?')) {
+        localStorage.removeItem('myids');
+        updateMyIdsList();
+        $('#uid').val('');
+        $('#myIdName').val('');
+        if (peer) {
+          peer.destroy();
+          peer = null;
+          setStatus('Disconnected', 'disconnected', 'badge-disconnected');
+        }
+      }
+    });
+
+    // Limpar todos os contatos
+    $('#clearAllContacts').click(function() {
+      if (confirm('Are you sure you want to delete all contacts?')) {
+        localStorage.removeItem('contacts');
+        updateContactsList();
+        $('#rid').val('');
+        $('#contactName').val('');
+        if (conn) {
+          conn.close();
+          conn = null;
+          currentContact = null;
+        }
+      }
+    });
+
+    // Delegar eventos para botões de cópia
+    $('#myIdsList, #contactsList').on('click', '.copy-btn', function() {
+      const id = $(this).data('id');
+      if (id) {
+        copyToClipboard(id, $(this));
+      } else {
+        alert('No ID to copy');
+      }
+    });
+
+    // Função para exportar contatos
+    $('#exportContacts').click(function() {
+      const contacts = JSON.parse(localStorage.getItem('contacts') || '[]');
+      if (contacts.length === 0) {
+        alert('No contacts to export');
+        return;
+      }
+      
+      const dataStr = JSON.stringify(contacts, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+      
+      const exportName = 'destal_contacts_' + new Date().toISOString().slice(0, 10) + '.json';
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportName);
+      linkElement.click();
+    });
+
+    // Função para exportar meus IDs
+    $('#exportMyIds').click(function() {
+      const myIds = JSON.parse(localStorage.getItem('myids') || '[]');
+      if (myIds.length === 0) {
+        alert('No IDs to export');
+        return;
+      }
+      
+      const dataStr = JSON.stringify(myIds, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+      
+      const exportName = 'destal_myids_' + new Date().toISOString().slice(0, 10) + '.json';
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportName);
+      linkElement.click();
+    });
+
+    // Função para importar contatos
+    $('#importContacts').click(function() {
+      $('#importFileInput').off('change').on('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const newContacts = JSON.parse(e.target.result);
+            if (!Array.isArray(newContacts)) {
+              throw new Error('Invalid format: expected an array of contacts');
+            }
+            
+            const currentContacts = JSON.parse(localStorage.getItem('contacts') || '[]');
+            const mergedContacts = [...currentContacts];
+            
+            newContacts.forEach(newContact => {
+              if (!newContact.id || !newContact.name) {
+                throw new Error('Invalid contact format: missing id or name');
+              }
+              
+              // Verifica se o contato já existe
+              const existingIndex = currentContacts.findIndex(c => c.id === newContact.id);
+              if (existingIndex === -1) {
+                mergedContacts.push(newContact);
+              } else {
+                // Atualiza o nome se for diferente
+                if (currentContacts[existingIndex].name !== newContact.name) {
+                  mergedContacts[existingIndex].name = newContact.name;
+                }
+              }
+            });
+            
+            localStorage.setItem('contacts', JSON.stringify(mergedContacts));
+            updateContactsList();
+            alert(`Successfully imported ${newContacts.length} contacts. Total contacts now: ${mergedContacts.length}`);
+          } catch (error) {
+            alert('Error importing contacts: ' + error.message);
+            console.error('Import error:', error);
+          }
+          
+          // Limpa o input para permitir nova importação
+          $(this).val('');
+        };
+        
+        reader.readAsText(file);
+      });
+      
+      $('#importFileInput').click();
+    });
+
+    // Função para importar meus IDs
+    $('#importMyIds').click(function() {
+      $('#importFileInput').off('change').on('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const newIds = JSON.parse(e.target.result);
+            if (!Array.isArray(newIds)) {
+              throw new Error('Invalid format: expected an array of IDs');
+            }
+            
+            const currentIds = JSON.parse(localStorage.getItem('myids') || '[]');
+            const mergedIds = [...currentIds];
+            
+            newIds.forEach(newId => {
+              if (!newId.id || !newId.name) {
+                throw new Error('Invalid ID format: missing id or name');
+              }
+              
+              // Verifica se o ID já existe
+              const existingIndex = currentIds.findIndex(i => i.id === newId.id);
+              if (existingIndex === -1) {
+                mergedIds.push(newId);
+              } else {
+                // Atualiza o nome se for diferente
+                if (currentIds[existingIndex].name !== newId.name) {
+                  mergedIds[existingIndex].name = newId.name;
+                }
+              }
+            });
+            
+            localStorage.setItem('myids', JSON.stringify(mergedIds));
+            updateMyIdsList();
+            alert(`Successfully imported ${newIds.length} IDs. Total IDs now: ${mergedIds.length}`);
+          } catch (error) {
+            alert('Error importing IDs: ' + error.message);
+            console.error('Import error:', error);
+          }
+          
+          // Limpa o input para permitir nova importação
+          $(this).val('');
+        };
+        
+        reader.readAsText(file);
+      });
+      
+      $('#importFileInput').click();
+    });
+
+    // Inicializar UI
+    updateMyIdsList();
+    updateContactsList();
+  });
+
+  // PWA Installation
+  let deferredPrompt;
+  const installBtn = document.getElementById('install-btn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
+  });
+
+  installBtn.addEventListener('click', () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(choiceResult => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('App installed');
+        }
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      });
+    }
+  });
+  
+  // Controle do modal de informações
+function openInfoModal() {
+  $('#infoModal').addClass('active');
+  $('body').css('overflow', 'hidden');
+}
+
+function closeInfoModal() {
+  $('#infoModal').removeClass('active');
+  $('body').css('overflow', '');
+}
+
+// Eventos para abrir/fechar o modal de informações
+$('#infoToggle').click(openInfoModal);
+$('#closeInfoModal').click(closeInfoModal);
+$('#infoModal').click(function(e) {
+  if (e.target === this) {
+    closeInfoModal();
+  }
+});
+  </script>
+</body>
+          </html>
