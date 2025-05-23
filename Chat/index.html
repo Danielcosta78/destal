@@ -1385,57 +1385,107 @@
     }
 
     // Inicializar Peer
-    function initialize() {
-      const customId = $('#uid').val().trim();
-      peer = customId ? new Peer(customId) : new Peer();
-
-      peer.on('open', id => {
-        $('#uid').val(id);
-        last_peer = id;
-        setStatus('Ready to connect', 'ready', 'badge-ready');
-        saveMyId(id, $('#myIdName').val().trim() || `My ID ${id.substring(0, 4)}`);
-      });
-
-      peer.on('connection', c => {
-        if (conn) { 
-          c.close(); 
-          return; 
-        }
-        conn = c;
-        ready();
-      });
-
-      peer.on('disconnected', () => {
-        setStatus('Disconnected', 'disconnected', 'badge-disconnected');
-        peer.id = last_peer;
-        peer.reconnect();
-      });
-
-      peer.on('close', () => {
-        conn = null;
-        setStatus('Client closed', 'disconnected', 'badge-disconnected');
-        endCall();
-      });
-
-      peer.on('error', err => {
-        console.error('PeerJS Error:', err);
-        setStatus('Error: ' + err.type, 'disconnected', 'badge-disconnected');
-        alert('Error: ' + err.message);
-        endCall();
-      });
-
-      // Lidar com chamadas diretas (não mediadas pela conexão de dados)
-      peer.on('call', (call) => {
-        handleDirectIncomingCall(call);
-      });
+function initialize() {
+  const customId = $('#uid').val().trim();
+  
+  // Configurações dos servidores (seu servidor primeiro, depois fallback público)
+  const servers = [
+    {
+      host: 'servidor-pn0h.onrender.com',
+      port: 443,
+      secure: true,
+      path: '/',
+      label: 'Custom Server'
+    },
+    {
+      host: '0.peerjs.com',
+      port: 443,
+      secure: true,
+      path: '/',
+      label: 'Public Backup Server'
     }
+  ];
+
+  // Destruir instância anterior se existir
+  if (peer) {
+    peer.destroy();
+    setStatus('Reconnecting...', 'disconnected', 'badge-disconnected');
+  }
+
+  // Tentar conectar a cada servidor sequencialmente
+  let currentServerIndex = 0;
+  
+  function tryConnect() {
+    if (currentServerIndex >= servers.length) {
+      setStatus('All servers failed', 'disconnected', 'badge-disconnected');
+      alert('Could not connect to any PeerJS server. Please check your internet connection.');
+      return;
+    }
+
+    const server = servers[currentServerIndex];
+    console.log(`Trying to connect to ${server.label}...`);
+    setStatus(`Connecting to ${server.label}...`, 'disconnected', 'badge-disconnected');
+
+    const peerOptions = {
+      host: server.host,
+      port: server.port,
+      secure: server.secure,
+      path: server.path,
+      debug: 3
+    };
+
+    peer = customId ? new Peer(customId, peerOptions) : new Peer(peerOptions);
+
+    peer.on('open', id => {
+      console.log(`Connected to ${server.label} with ID:`, id);
+      $('#uid').val(id);
+      last_peer = id;
+      setStatus(`Ready (${server.label})`, 'ready', 'badge-ready');
+      saveMyId(id, $('#myIdName').val().trim() || `My ID ${id.substring(0, 4)}`);
+      updateMyIdsList();
+    });
+
+    peer.on('error', err => {
+      console.error(`${server.label} error:`, err);
+      
+      // Ignorar erros específicos que não requerem troca de servidor
+      if (err.type !== 'peer-unavailable' && err.type !== 'invalid-id') {
+        currentServerIndex++;
+        setTimeout(tryConnect, 1000); // Tentar próximo servidor após 1 segundo
+      }
+    });
+
+    // Configurar outros handlers como antes
+    peer.on('connection', c => {
+      if (conn) { c.close(); return; }
+      conn = c;
+      ready();
+    });
+
+    peer.on('disconnected', () => {
+      peer.id = last_peer;
+      peer.reconnect();
+    });
+
+    peer.on('close', () => {
+      conn = null;
+      setStatus('Connection closed', 'disconnected', 'badge-disconnected');
+      endCall();
+    });
+
+    peer.on('call', handleDirectIncomingCall);
+  }
+
+  // Iniciar o processo de conexão
+  tryConnect();
+}
 
     // ==============================================
     // Funções para chamadas de vídeo/áudio
     // ==============================================
 
     // Iniciar uma chamada
-    async function startCall(callType) {
+ async function startCall(callType) {
   if (!peer || !conn || !conn.open) {
     alert('Not connected to any peer');
     return;
@@ -2175,4 +2225,4 @@ $('#infoModal').click(function(e) {
 });
   </script>
 </body>
-          </html>
+  </html>
