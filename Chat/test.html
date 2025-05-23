@@ -1179,6 +1179,9 @@
     let isVideoOff = false;
     let currentCallType = null; // 'audio' or 'video'
     let incomingCall = null;
+    let call = null;
+    let currentStream = null;
+    let currentCallType = null;
 
     // Controle do menu lateral
     function openSidebar() {
@@ -1385,98 +1388,107 @@
     }
 
     // Inicializar Peer
-    function initialize() {
-      const customId = $('#uid').val().trim();
-      peer = customId ? new Peer(customId) : new Peer();
-
-      peer.on('open', id => {
-        $('#uid').val(id);
-        last_peer = id;
-        setStatus('Ready to connect', 'ready', 'badge-ready');
-        saveMyId(id, $('#myIdName').val().trim() || `My ID ${id.substring(0, 4)}`);
-      });
-
-      peer.on('connection', c => {
-        if (conn) { 
-          c.close(); 
-          return; 
-        }
-        conn = c;
-        ready();
-      });
-
-      peer.on('disconnected', () => {
-        setStatus('Disconnected', 'disconnected', 'badge-disconnected');
-        peer.id = last_peer;
-        peer.reconnect();
-      });
-
-      peer.on('close', () => {
-        conn = null;
-        setStatus('Client closed', 'disconnected', 'badge-disconnected');
-        endCall();
-      });
-
-      peer.on('error', err => {
-        console.error('PeerJS Error:', err);
-        setStatus('Error: ' + err.type, 'disconnected', 'badge-disconnected');
-        alert('Error: ' + err.message);
-        endCall();
-      });
-
-      // Lidar com chamadas diretas (não mediadas pela conexão de dados)
-      peer.on('call', (call) => {
-        handleDirectIncomingCall(call);
-      });
+function initialize() {
+  const customId = $('#uid').val().trim();
+  
+  // Configurações dos servidores (seu servidor primeiro, depois fallback público)
+  const servers = [
+    {
+      host: 'servidor-pn0h.onrender.com',
+      port: 443,
+      secure: true,
+      path: '/',
+      label: 'Custom Server'
+    },
+    {
+      host: '0.peerjs.com',
+      port: 443,
+      secure: true,
+      path: '/',
+      label: 'Public Backup Server'
     }
+  ];
+
+  // Destruir instância anterior se existir
+  if (peer) {
+    peer.destroy();
+    setStatus('Reconnecting...', 'disconnected', 'badge-disconnected');
+  }
+
+  // Tentar conectar a cada servidor sequencialmente
+  let currentServerIndex = 0;
+  
+  function tryConnect() {
+    if (currentServerIndex >= servers.length) {
+      setStatus('All servers failed', 'disconnected', 'badge-disconnected');
+      alert('Could not connect to any PeerJS server. Please check your internet connection.');
+      return;
+    }
+
+    const server = servers[currentServerIndex];
+    console.log(`Trying to connect to ${server.label}...`);
+    setStatus(`Connecting to ${server.label}...`, 'disconnected', 'badge-disconnected');
+
+    const peerOptions = {
+      host: server.host,
+      port: server.port,
+      secure: server.secure,
+      path: server.path,
+      debug: 3
+    };
+
+    peer = customId ? new Peer(customId, peerOptions) : new Peer(peerOptions);
+
+    peer.on('open', id => {
+      console.log(`Connected to ${server.label} with ID:`, id);
+      $('#uid').val(id);
+      last_peer = id;
+      setStatus(`Ready (${server.label})`, 'ready', 'badge-ready');
+      saveMyId(id, $('#myIdName').val().trim() || `My ID ${id.substring(0, 4)}`);
+      updateMyIdsList();
+    });
+
+    peer.on('error', err => {
+      console.error(`${server.label} error:`, err);
+      
+      // Ignorar erros específicos que não requerem troca de servidor
+      if (err.type !== 'peer-unavailable' && err.type !== 'invalid-id') {
+        currentServerIndex++;
+        setTimeout(tryConnect, 1000); // Tentar próximo servidor após 1 segundo
+      }
+    });
+
+    // Configurar outros handlers como antes
+    peer.on('connection', c => {
+      if (conn) { c.close(); return; }
+      conn = c;
+      ready();
+    });
+
+    peer.on('disconnected', () => {
+      peer.id = last_peer;
+      peer.reconnect();
+    });
+
+    peer.on('close', () => {
+      conn = null;
+      setStatus('Connection closed', 'disconnected', 'badge-disconnected');
+      endCall();
+    });
+
+    peer.on('call', handleDirectIncomingCall);
+  }
+
+  // Iniciar o processo de conexão
+  tryConnect();
+}
 
     // ==============================================
     // Funções para chamadas de vídeo/áudio
     // ==============================================
 
     // Iniciar uma chamada
-    async function startCall(callType) {
-      if (!peer || !conn || !conn.open) {
-        alert('Not connected to any peer');
-        return;
-      }
-
-      try {
-        currentCallType = callType;
-        const constraints = {
-          audio: true,
-          video: callType === 'video' ? {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30 }
-          } : false
-        };
-
-        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-        document.getElementById('localVideo').srcObject = currentStream;
-
-        // Iniciar a chamada diretamente via PeerJS
-        call = peer.call(conn.peer, currentStream, {
-          metadata: { callType: callType }
-        });
-
-        setupCallHandlers();
-
-        // Mostrar UI de chamada
-        $('#callContainer').addClass('active');
-        $('#remoteVideoLabel').text(currentContact?.name || conn.peer.substring(0, 8));
-
-        // Configurar controles
-        isMuted = false;
-        isVideoOff = callType === 'video' ? false : true;
-        updateCallControls();
-
-      } catch (error) {
-        console.error('Error starting call:', error);
-        alert('Error starting call: ' + error.message);
-        endCall();
-      }
-    }
+ 
 
     // Lidar com chamada recebida via conexão de dados (opcional)
     function handleIncomingCall(data) {
@@ -1498,42 +1510,7 @@
     }
 
     // Aceitar chamada
-    async function acceptCall() {
-      if (!incomingCall) return;
-      
-      $('#callNotification').removeClass('active');
-      
-      try {
-        const constraints = {
-          audio: true,
-          video: currentCallType === 'video' ? {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30 }
-          } : false
-        };
-
-        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-        document.getElementById('localVideo').srcObject = currentStream;
-
-        call = incomingCall;
-        call.answer(currentStream);
-        setupCallHandlers();
-
-        $('#callContainer').addClass('active');
-        $('#remoteVideoLabel').text(currentContact?.name || call.peer.substring(0, 8));
-
-        isMuted = false;
-        isVideoOff = currentCallType === 'video' ? false : true;
-        updateCallControls();
-
-      } catch (error) {
-        console.error('Error accepting call:', error);
-        alert('Error accepting call: ' + error.message);
-        endCall();
-      }
-    }
-
+    
     // Configurar handlers para chamada
     function setupCallHandlers() {
       if (!call) return;
@@ -1570,28 +1547,123 @@
       call = null;
     }
 
-    // Finalizar chamada
-    function endCall() {
-      if (call) {
-        call.close();
-        call = null;
-      }
-      
-      if (incomingCall) {
-        incomingCall.close();
-        incomingCall = null;
-      }
-      
-      if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
-        currentStream = null;
-      }
-      
-      document.getElementById('localVideo').srcObject = null;
-      document.getElementById('remoteVideo').srcObject = null;
-      
-      $('#callContainer').removeClass('active');
-    }
+    // Variáveis globais (adicionar às existentes)
+
+
+// Função para iniciar chamada (substituir a existente)
+async function startCall(callType) {
+  if (!peer || !conn || !conn.open) {
+    alert('Not connected to any peer');
+    return;
+  }
+
+  try {
+    currentCallType = callType;
+    const constraints = {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      },
+      video: callType === 'video' ? {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 30 }
+      } : false
+    };
+
+    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+    document.getElementById('localVideo').srcObject = currentStream;
+
+    call = peer.call(conn.peer, currentStream, {
+      metadata: { callType: callType }
+    });
+
+    call.on('stream', (remoteStream) => {
+      document.getElementById('remoteVideo').srcObject = remoteStream;
+    });
+
+    call.on('close', endCall);
+    call.on('error', endCall);
+
+    $('#callContainer').addClass('active');
+    $('#remoteVideoLabel').text(currentContact?.name || conn.peer.substring(0, 8));
+
+  } catch (error) {
+    console.error('Error starting call:', error);
+    alert('Error starting call: ' + error.message);
+    endCall();
+  }
+}
+
+// Função para aceitar chamada (substituir a existente)
+async function acceptCall() {
+  if (!incomingCall) return;
+  
+  $('#callNotification').removeClass('active');
+  
+  try {
+    const constraints = {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      },
+      video: currentCallType === 'video' ? {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 30 }
+      } : false
+    };
+
+    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+    document.getElementById('localVideo').srcObject = currentStream;
+
+    call = incomingCall;
+    call.answer(currentStream);
+    
+    call.on('stream', (remoteStream) => {
+      document.getElementById('remoteVideo').srcObject = remoteStream;
+    });
+
+    $('#callContainer').addClass('active');
+    $('#remoteVideoLabel').text(currentContact?.name || call.peer.substring(0, 8));
+
+  } catch (error) {
+    console.error('Error accepting call:', error);
+    alert('Error accepting call: ' + error.message);
+    endCall();
+  }
+}
+
+// Função para finalizar chamada (substituir a existente)
+function endCall() {
+  if (call) {
+    call.close();
+    call = null;
+  }
+  
+  if (currentStream) {
+    currentStream.getTracks().forEach(track => track.stop());
+    currentStream = null;
+  }
+  
+  document.getElementById('localVideo').srcObject = null;
+  document.getElementById('remoteVideo').srcObject = null;
+  
+  $('#callContainer').removeClass('active');
+}
+
+// Handler para chamadas diretas (manter existente)
+function handleDirectIncomingCall(incomingCallObj) {
+  incomingCall = incomingCallObj;
+  currentCallType = incomingCall.metadata?.callType || 'video';
+  
+  const peerName = currentContact?.name || incomingCall.peer.substring(0, 8);
+  $('#callNotificationText').text(`Incoming ${currentCallType} call from ${peerName}`);
+  $('#callNotification').addClass('active');
+}
+    
 
     // Alternar mudo
     function toggleMute() {
@@ -2175,4 +2247,4 @@ $('#infoModal').click(function(e) {
 });
   </script>
 </body>
-          </html>
+  </html>
