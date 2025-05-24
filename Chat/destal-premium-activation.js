@@ -1,31 +1,17 @@
-// destal-premium.js
-// Complete Premium System (English)
+// destal-premium-final-en.js
 (function() {
-  // Configuration
+  // Configuração de chaves e funcionalidades
   const config = {
     validKeys: {
-      'FREE2023': { 
-        features: [],
-        message: 'Free version activated'
-      },
-      'PRO2023': { 
-        features: ['themes', 'emojis'],
-        message: 'Pro features unlocked!'
-      },
-      'ULTRA2023': { 
-        features: ['themes', 'emojis', 'files', 'colors'],
-        message: 'All premium features unlocked!'
-      }
+      'FREE2023': { features: [], message: 'Free version activated' },
+      'PRO2023': { features: ['themes', 'emojis'], message: 'Pro features unlocked!' },
+      'ULTRA2023': { features: ['themes', 'emojis', 'files', 'colors'], message: 'All premium features unlocked!' }
     },
-    
     features: {
-      'themes': {
+      themes: {
         name: 'Premium Themes',
         apply: function() {
-          // Remove old style if exists
           $('#premium-theme-styles').remove();
-
-          // Add theme CSS with new themes
           $('head').append(`
             <style id="premium-theme-styles">
               .theme-matrix {
@@ -79,8 +65,6 @@
               }
             </style>
           `);
-          
-          // Show theme selector
           $('.premium-themes-container').show();
         },
         remove: function() {
@@ -89,11 +73,10 @@
           $('#premium-theme-styles').remove();
         }
       },
-      'emojis': {
+      emojis: {
         name: 'Emoji Pack',
         apply: function() {
           if ($('.premium-emojis-toggle').length === 0) {
-            // Botão para mostrar/esconder emojis
             $('#sidebar .sidebar-content').prepend(`
               <div class="sidebar-section premium-emojis-toggle" style="margin-bottom:10px;">
                 <button class="btn btn-sm btn-secondary btn-block" style="white-space: nowrap;">
@@ -101,15 +84,13 @@
                 </button>
               </div>
             `);
-
-            // Container dos emojis (escondido inicialmente)
             $('#sidebar .sidebar-content').prepend(`
               <div class="sidebar-section premium-emojis-container" style="display:none;">
                 <h5 class="sidebar-title"><i class="fas fa-smile"></i> Premium Emojis</h5>
                 <div class="emoji-grid" style="
                   display:grid; 
                   grid-template-columns:repeat(3,1fr); 
-                  gap:12px; 
+                  gap:18px; 
                   padding:10px;
                   font-size: 28px;
                   cursor: pointer;
@@ -129,8 +110,6 @@
                 </div>
               </div>
             `);
-
-            // Evento para inserir emoji no campo de texto
             $(document).on('click', '.emoji-grid span', function() {
               const emoji = $(this).text();
               const input = $('#messageText');
@@ -138,8 +117,6 @@
                 input.val(input.val() + emoji).focus();
               }
             });
-
-            // Evento do botão mostrar/esconder emojis
             $(document).on('click', '.premium-emojis-toggle button', function() {
               const panel = $('.premium-emojis-container');
               if (panel.is(':visible')) {
@@ -159,16 +136,14 @@
           $(document).off('click', '.premium-emojis-toggle button');
         }
       },
-      'files': {
+      files: {
         name: 'Larger Files',
         apply: function() {
           // Sem mudanças visuais no momento
         },
-        remove: function() {
-          // Resetar limite de tamanho, se necessário
-        }
+        remove: function() {}
       },
-      'colors': {
+      colors: {
         name: 'Colored Names',
         apply: function() {
           $('head').append(`
@@ -191,14 +166,12 @@
     }
   };
 
-  // Current activation state
   let activation = {
     active: false,
     key: null,
     features: []
   };
 
-  // Initialize system
   function init() {
     loadActivation();
     addPremiumSection();
@@ -220,46 +193,28 @@
 
   function activateKey(key) {
     key = key.trim().toUpperCase();
-    
     if (!config.validKeys[key]) {
-      return {
-        success: false,
-        message: 'Invalid activation key'
-      };
+      return { success: false, message: 'Invalid activation key' };
     }
-    
-    // Remove previous features first
     if (activation.active) {
       removeFeatures();
     }
-    
     activation = {
       active: true,
       key: key,
       features: config.validKeys[key].features
     };
-    
     saveActivation();
     applyFeatures();
-    
-    return {
-      success: true,
-      message: config.validKeys[key].message
-    };
+    return { success: true, message: config.validKeys[key].message };
   }
 
   function removePremium() {
     removeFeatures();
-    activation = {
-      active: false,
-      key: null,
-      features: []
-    };
+    activation = { active: false, key: null, features: [] };
     saveActivation();
     $('.activation-result').html(`
-      <div class="alert alert-success">
-        Premium features removed successfully
-      </div>
+      <div class="alert alert-success">Premium features removed successfully</div>
     `);
     setTimeout(() => location.reload(), 1000);
   }
@@ -281,27 +236,79 @@
   }
 
   function addPremiumSection() {
-    // Adiciona o bloco premium NO TOPO do menu
+    // Remove seção anterior se existir
+    $('.sidebar-section.premium-section').remove();
+
+    // Cria a seção Premium no topo do menu
     $('#sidebar .sidebar-content').prepend(`
-      <div class="sidebar-section">
+      <div class="sidebar-section premium-section">
         <h5 class="sidebar-title"><i class="fas fa-crown"></i> Premium</h5>
         <div class="form-group">
           <input type="text" class="form-control mb-2 premium-key-input" placeholder="Enter activation key">
           <button class="btn btn-primary btn-sm btn-block activate-btn">Activate</button>
           ${activation.active ? `
-            <button class="btn btn-danger btn-sm btn-block mt-2 remove-premium-btn">
-              Remove Premium
-            </button>
+            <button class="btn btn-danger btn-sm btn-block mt-2 remove-premium-btn">Remove Premium</button>
           ` : ''}
         </div>
         <div class="activation-result mt-2"></div>
       </div>
-      
+
       <div class="sidebar-section premium-themes-container" style="display: none; margin-top: 15px;">
         <h5 class="sidebar-title"><i class="fas fa-palette"></i> Premium Themes</h5>
-        <select class="form-control form-control-sm theme-selector">
+        <select class="form-control form-control-sm theme-selector" style="margin-top: 8px;">
           <option value="">Default Theme</option>
           <option value="theme-matrix">Matrix</option>
           <option value="theme-deep-blue">Deep Blue</option>
           <option value="theme-dark-red">Dark Red</option>
-          <option
+          <option value="theme-nature-green">Nature Green</option>
+          <option value="theme-sunset-glow">Sunset Glow</option>
+          <option value="theme-ocean-breeze">Ocean Breeze</option>
+          <option value="theme-forest-mist">Forest Mist</option>
+          <option value="theme-lavender-dream">Lavender Dream</option>
+        </select>
+      </div>
+    `);
+
+    if (!activation.active) {
+      $('.premium-themes-container').hide();
+    }
+
+    // Eventos
+    $('.activate-btn').on('click', () => {
+      const key = $('.premium-key-input').val();
+      const res = activateKey(key);
+      const resultDiv = $('.activation-result');
+      if (res.success) {
+        resultDiv.html(`<div class="alert alert-success">${res.message}</div>`);
+        // Atualiza botão remover
+        $('.premium-section').find('.remove-premium-btn').remove();
+        $('.premium-section .form-group').append(`
+          <button class="btn btn-danger btn-sm btn-block mt-2 remove-premium-btn">Remove Premium</button>
+        `);
+        $('.premium-themes-container').show();
+      } else {
+        resultDiv.html(`<div class="alert alert-danger">${res.message}</div>`);
+      }
+    });
+
+    $(document).on('click', '.remove-premium-btn', () => {
+      removePremium();
+    });
+
+    // Aplicar tema selecionado
+    $('.theme-selector').on('change', function() {
+      const theme = $(this).val();
+      $('body').removeClass(
+        'theme-matrix theme-deep-blue theme-dark-red theme-nature-green theme-sunset-glow theme-ocean-breeze theme-forest-mist theme-lavender-dream'
+      );
+      if (theme) {
+        $('body').addClass(theme);
+      }
+    });
+  }
+
+  // Inicializa ao carregar o script
+  $(document).ready(() => {
+    init();
+  });
+})();
