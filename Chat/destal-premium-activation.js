@@ -3,7 +3,7 @@
   // Configuração simplificada: só uma chave válida e dois recursos
   const config = {
     validKeys: {
-      'ULTRA2023': { features: ['themes', 'emojis'], message: 'All premium features unlocked!' }
+      'PRO7373': { features: ['themes', 'emojis'], message: 'All premium features unlocked!' }
     },
     features: {
       themes: {
