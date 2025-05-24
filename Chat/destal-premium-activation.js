@@ -250,9 +250,9 @@
       </div>
       
       <!-- Empty space elements -->
-      <p style="margin: 0; padding: 0; height: 20px;"></p>
-      <p style="margin: 0; padding: 0; height: 20px;"></p>
-      <p style="margin: 0; padding: 0; height: 20px;"></p>
+      <p style="margin: 0; padding: 0; height: 20px;">&nbsp;</p>
+      <p style="margin: 0; padding: 0; height: 20px;">&nbsp;</p>
+      <p style="margin: 0; padding: 0; height: 20px;">&nbsp;</p>
     `);
     
     // Theme selector handler
