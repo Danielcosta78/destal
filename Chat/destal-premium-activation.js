@@ -1,49 +1,49 @@
-// destal-premium-menu.js
-// Sistema premium simplificado com tudo no menu lateral
+// destal-premium-final-en.js
+// Complete Premium System (English)
 (function() {
-  // Configuração em português
+  // Configuration
   const config = {
-    chavesValidas: {
+    validKeys: {
       'FREE2023': { 
-        recursos: [],
-        mensagem: 'Versão gratuita ativada'
+        features: [],
+        message: 'Free version activated'
       },
       'PRO2023': { 
-        recursos: ['temas', 'emojis'],
-        mensagem: 'Recursos Pro ativados!'
+        features: ['themes', 'emojis'],
+        message: 'Pro features unlocked!'
       },
       'ULTRA2023': { 
-        recursos: ['temas', 'emojis', 'arquivos', 'cores'],
-        mensagem: 'Todos recursos premium ativados!'
+        features: ['themes', 'emojis', 'files', 'colors'],
+        message: 'All premium features unlocked!'
       }
     },
     
-    recursos: {
-      'temas': {
-        nome: 'Temas Visuais',
-        aplicar: function() {
-          // Adiciona os temas premium
+    features: {
+      'themes': {
+        name: 'Premium Themes',
+        apply: function() {
+          // Add theme CSS
           $('head').append(`
             <style>
-              .tema-matrix {
+              .theme-matrix {
                 --bg-color: #000;
                 --text-color: #0f0;
                 --card-bg: #121212;
                 --border-color: #0f0;
               }
-              .tema-azul-profundo {
+              .theme-deep-blue {
                 --bg-color: #001a33;
                 --text-color: #cce6ff;
                 --card-bg: #003366;
                 --border-color: #4da6ff;
               }
-              .tema-escuro-vermelho {
+              .theme-dark-red {
                 --bg-color: #1a0000;
                 --text-color: #ff9999;
                 --card-bg: #330000;
                 --border-color: #ff4d4d;
               }
-              .tema-verde-natureza {
+              .theme-nature-green {
                 --bg-color: #001a00;
                 --text-color: #99ff99;
                 --card-bg: #003300;
@@ -51,49 +51,71 @@
               }
             </style>
           `);
+          
+          // Show theme selector
+          $('.premium-themes-container').show();
+        },
+        remove: function() {
+          $('body').removeClass('theme-matrix theme-deep-blue theme-dark-red theme-nature-green');
+          $('.premium-themes-container').hide();
         }
       },
       'emojis': {
-        nome: 'Pacote de Emojis',
-        aplicar: function() {
+        name: 'Emoji Pack',
+        apply: function() {
           const emojis = ['😎', '🚀', '🌟', '🎩', '👑', '💎', '⚡', '🔥', '🌈'];
           
-          // Adiciona botão de emojis no menu
-          $('#sidebar').append(`
-            <div class="sidebar-section">
-              <h5 class="sidebar-title"><i class="fas fa-smile"></i> Emojis Premium</h5>
-              <div class="emoji-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
-                ${emojis.map(e => `
-                  <span class="emoji-btn" style="font-size: 24px; cursor: pointer; text-align: center;">${e}</span>
-                `).join('')}
+          // Add emoji panel
+          $('#sidebar .sidebar-content').append(`
+            <div class="sidebar-section premium-emojis-container">
+              <h5 class="sidebar-title"><i class="fas fa-smile"></i> Premium Emojis</h5>
+              <div class="emoji-grid">
+                ${emojis.map(e => `<span class="emoji-btn">${e}</span>`).join('')}
               </div>
             </div>
+            <style>
+              .emoji-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 5px;
+                padding: 5px;
+              }
+              .emoji-btn {
+                font-size: 24px;
+                cursor: pointer;
+                text-align: center;
+                padding: 5px;
+              }
+              .emoji-btn:hover {
+                transform: scale(1.2);
+              }
+            </style>
           `);
           
-          // Insere emoji no chat
+          // Insert emoji on click
           $(document).on('click', '.emoji-btn', function() {
             $('#messageText').val($('#messageText').val() + $(this).text());
           });
+        },
+        remove: function() {
+          $('.premium-emojis-container').remove();
         }
       },
-      'arquivos': {
-        nome: 'Arquivos Grandes',
-        aplicar: function() {
-          $(document).on('change', '#fileInput', function() {
-            const file = this.files[0];
-            if (file && file.size > 100000000) { // 100MB
-              alert('Arquivo muito grande (limite: 100MB)');
-              $(this).val('');
-            }
-          });
+      'files': {
+        name: 'Larger Files',
+        apply: function() {
+          // No visual changes needed
+        },
+        remove: function() {
+          // Reset file size limit
         }
       },
-      'cores': {
-        nome: 'Nomes Coloridos',
-        aplicar: function() {
+      'colors': {
+        name: 'Colored Names',
+        apply: function() {
           $('head').append(`
             <style>
-              .nome-colorido {
+              .premium-name {
                 background: linear-gradient(90deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
@@ -101,133 +123,174 @@
               }
             </style>
           `);
-          $('.message-author').addClass('nome-colorido');
+          $('.message-author').addClass('premium-name');
+        },
+        remove: function() {
+          $('.message-author').removeClass('premium-name');
         }
       }
     }
   };
 
-  // Estado atual
-  let ativacao = {
-    ativo: false,
-    chave: null,
-    recursos: []
+  // Current activation state
+  let activation = {
+    active: false,
+    key: null,
+    features: []
   };
 
-  // Inicialização
-  function iniciar() {
-    carregarAtivacao();
-    adicionarMenuPremium();
-    if (ativacao.ativo) {
-      aplicarRecursos();
+  // Initialize system
+  function init() {
+    loadActivation();
+    addPremiumSection();
+    if (activation.active) {
+      applyFeatures();
     }
   }
 
-  function carregarAtivacao() {
-    const salvo = localStorage.getItem('destal-premium');
-    if (salvo) {
-      ativacao = JSON.parse(salvo);
+  function loadActivation() {
+    const saved = localStorage.getItem('destal-premium');
+    if (saved) {
+      activation = JSON.parse(saved);
     }
   }
 
-  function salvarAtivacao() {
-    localStorage.setItem('destal-premium', JSON.stringify(ativacao));
+  function saveActivation() {
+    localStorage.setItem('destal-premium', JSON.stringify(activation));
   }
 
-  function ativarChave(chave) {
-    chave = chave.trim().toUpperCase();
+  function activateKey(key) {
+    key = key.trim().toUpperCase();
     
-    if (!config.chavesValidas[chave]) {
+    if (!config.validKeys[key]) {
       return {
-        sucesso: false,
-        mensagem: 'Chave de ativação inválida'
+        success: false,
+        message: 'Invalid activation key'
       };
     }
     
-    ativacao = {
-      ativo: true,
-      chave: chave,
-      recursos: config.chavesValidas[chave].recursos
+    // Remove previous features first
+    if (activation.active) {
+      removeFeatures();
+    }
+    
+    activation = {
+      active: true,
+      key: key,
+      features: config.validKeys[key].features
     };
     
-    salvarAtivacao();
-    aplicarRecursos();
+    saveActivation();
+    applyFeatures();
     
     return {
-      sucesso: true,
-      mensagem: config.chavesValidas[chave].mensagem
+      success: true,
+      message: config.validKeys[key].message
     };
   }
 
-  function aplicarRecursos() {
-    ativacao.recursos.forEach(recurso => {
-      if (config.recursos[recurso] && config.recursos[recurso].aplicar) {
-        config.recursos[recurso].aplicar();
+  function removePremium() {
+    removeFeatures();
+    activation = {
+      active: false,
+      key: null,
+      features: []
+    };
+    saveActivation();
+    $('.activation-result').html(`
+      <div class="alert alert-success">
+        Premium features removed successfully
+      </div>
+    `);
+    setTimeout(() => location.reload(), 1000);
+  }
+
+  function applyFeatures() {
+    activation.features.forEach(feature => {
+      if (config.features[feature] && config.features[feature].apply) {
+        config.features[feature].apply();
       }
     });
   }
 
-  function adicionarMenuPremium() {
-    // Adiciona seção de ativação premium no menu
+  function removeFeatures() {
+    activation.features.forEach(feature => {
+      if (config.features[feature] && config.features[feature].remove) {
+        config.features[feature].remove();
+      }
+    });
+  }
+
+  function addPremiumSection() {
+    // Add premium section to sidebar
     $('#sidebar .sidebar-content').append(`
       <div class="sidebar-section">
         <h5 class="sidebar-title"><i class="fas fa-crown"></i> Premium</h5>
         <div class="form-group">
-          <input type="text" class="form-control form-control-sm mb-2 chave-premium-input" placeholder="Digite sua chave">
-          <button class="btn btn-primary btn-sm btn-block ativar-premium-btn">Ativar</button>
+          <input type="text" class="form-control mb-2 premium-key-input" placeholder="Enter activation key">
+          <button class="btn btn-primary btn-sm btn-block activate-btn">Activate</button>
+          ${activation.active ? `
+            <button class="btn btn-danger btn-sm btn-block mt-2 remove-premium-btn">
+              Remove Premium
+            </button>
+          ` : ''}
         </div>
-        <div class="resultado-ativacao mt-2"></div>
+        <div class="activation-result mt-2"></div>
       </div>
       
-      <div class="sidebar-section temas-premium-container" style="display: none;">
-        <h5 class="sidebar-title"><i class="fas fa-palette"></i> Temas Premium</h5>
-        <select class="form-control form-control-sm seletor-tema">
-          <option value="">Tema Padrão</option>
-          <option value="tema-matrix">Matrix</option>
-          <option value="tema-azul-profundo">Azul Profundo</option>
-          <option value="tema-escuro-vermelho">Vermelho Escuro</option>
-          <option value="tema-verde-natureza">Verde Natureza</option>
+      <div class="sidebar-section premium-themes-container" style="display: none;">
+        <h5 class="sidebar-title"><i class="fas fa-palette"></i> Premium Themes</h5>
+        <select class="form-control form-control-sm theme-selector">
+          <option value="">Default Theme</option>
+          <option value="theme-matrix">Matrix</option>
+          <option value="theme-deep-blue">Deep Blue</option>
+          <option value="theme-dark-red">Dark Red</option>
+          <option value="theme-nature-green">Nature Green</option>
         </select>
       </div>
+      
+      <!-- Empty space elements -->
+      <p style="margin: 0; padding: 0; height: 20px;"></p>
+      <p style="margin: 0; padding: 0; height: 20px;"></p>
+      <p style="margin: 0; padding: 0; height: 20px;"></p>
     `);
     
-    // Evento para trocar temas
-    $(document).on('change', '.seletor-tema', function() {
-      $('body').removeClass('tema-matrix tema-azul-profundo tema-escuro-vermelho tema-verde-natureza');
+    // Theme selector handler
+    $(document).on('change', '.theme-selector', function() {
+      $('body').removeClass('theme-matrix theme-deep-blue theme-dark-red theme-nature-green');
       if ($(this).val()) {
         $('body').addClass($(this).val());
       }
     });
     
-    // Evento para ativar premium
-    $(document).on('click', '.ativar-premium-btn', function() {
-      const chave = $('.chave-premium-input').val();
-      const resultado = ativarChave(chave);
+    // Activate button handler
+    $(document).on('click', '.activate-btn', function() {
+      const key = $('.premium-key-input').val();
+      const result = activateKey(key);
       
-      $('.resultado-ativacao').html(`
-        <div class="alert alert-${resultado.sucesso ? 'success' : 'danger'} p-2">
-          ${resultado.mensagem}
+      $('.activation-result').html(`
+        <div class="alert alert-${result.success ? 'success' : 'danger'}">
+          ${result.message}
         </div>
       `);
       
-      if (resultado.sucesso) {
-        $('.temas-premium-container').show();
-        setTimeout(() => {
-          $('.resultado-ativacao').empty();
-        }, 3000);
+      if (result.success) {
+        setTimeout(() => location.reload(), 1000);
       }
     });
     
-    // Mostra seção de temas se já estiver ativo
-    if (ativacao.ativo && ativacao.recursos.includes('temas')) {
-      $('.temas-premium-container').show();
+    // Remove premium button handler
+    $(document).on('click', '.remove-premium-btn', removePremium);
+    
+    // Show themes if already active
+    if (activation.active && activation.features.includes('themes')) {
+      $('.premium-themes-container').show();
     }
   }
 
-  // Inicia quando o DOM estiver pronto
+  // Initialize when DOM is ready
   $(document).ready(function() {
-    // Espera o menu carregar
-    setTimeout(iniciar, 500);
+    setTimeout(init, 500);
   });
 
 })();
