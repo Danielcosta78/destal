@@ -1,4 +1,4 @@
-// destal-premium-final-en.js
+// destal-premium.js
 // Complete Premium System (English)
 (function() {
   // Configuration
