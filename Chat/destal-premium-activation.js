@@ -1,11 +1,9 @@
 // destal-premium-final-en.js
 (function() {
-  // Configuração de chaves e funcionalidades
+  // Configuração simplificada: só uma chave válida e dois recursos
   const config = {
     validKeys: {
-      'FREE2023': { features: [], message: 'Free version activated' },
-      'PRO2023': { features: ['themes', 'emojis'], message: 'Pro features unlocked!' },
-      'ULTRA2023': { features: ['themes', 'emojis', 'files', 'colors'], message: 'All premium features unlocked!' }
+      'ULTRA2023': { features: ['themes', 'emojis'], message: 'All premium features unlocked!' }
     },
     features: {
       themes: {
@@ -135,33 +133,6 @@
           $(document).off('click', '.emoji-grid span');
           $(document).off('click', '.premium-emojis-toggle button');
         }
-      },
-      files: {
-        name: 'Larger Files',
-        apply: function() {
-          // Sem mudanças visuais no momento
-        },
-        remove: function() {}
-      },
-      colors: {
-        name: 'Colored Names',
-        apply: function() {
-          $('head').append(`
-            <style id="premium-name-style">
-              .premium-name {
-                background: linear-gradient(90deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                font-weight: bold;
-              }
-            </style>
-          `);
-          $('.message-author').addClass('premium-name');
-        },
-        remove: function() {
-          $('.message-author').removeClass('premium-name');
-          $('#premium-name-style').remove();
-        }
       }
     }
   };
@@ -177,6 +148,8 @@
     addPremiumSection();
     if (activation.active) {
       applyFeatures();
+      // Ajusta visual para premium ativo
+      hideActivationInput();
     }
   }
 
@@ -216,6 +189,8 @@
     $('.activation-result').html(`
       <div class="alert alert-success">Premium features removed successfully</div>
     `);
+    // Mostra input novamente após remover premium
+    showActivationInput();
     setTimeout(() => location.reload(), 1000);
   }
 
@@ -233,6 +208,16 @@
         config.features[feature].remove();
       }
     });
+  }
+
+  function hideActivationInput() {
+    $('.premium-key-input').hide();
+    $('.activate-btn').hide();
+  }
+
+  function showActivationInput() {
+    $('.premium-key-input').show();
+    $('.activate-btn').show();
   }
 
   function addPremiumSection() {
@@ -271,6 +256,10 @@
 
     if (!activation.active) {
       $('.premium-themes-container').hide();
+    } else {
+      // Se premium ativo, mostra container temas e esconde input ativação
+      $('.premium-themes-container').show();
+      hideActivationInput();
     }
 
     // Eventos
@@ -280,14 +269,29 @@
       const resultDiv = $('.activation-result');
       if (res.success) {
         resultDiv.html(`<div class="alert alert-success">${res.message}</div>`);
-        // Atualiza botão remover
-        $('.premium-section').find('.remove-premium-btn').remove();
-        $('.premium-section .form-group').append(`
-          <button class="btn btn-danger btn-sm btn-block mt-2 remove-premium-btn">Remove Premium</button>
-        `);
+        // Esconder input ativação e mostrar botão remover
+        hideActivationInput();
+        if ($('.remove-premium-btn').length === 0) {
+          $('.premium-section .form-group').append(`
+            <button class="btn btn-danger btn-sm btn-block mt-2 remove-premium-btn">Remove Premium</button>
+          `);
+        }
         $('.premium-themes-container').show();
+
+        // Remove a mensagem após 4 segundos
+        setTimeout(() => {
+          resultDiv.fadeOut('slow', () => {
+            resultDiv.html('').show();
+          });
+        }, 4000);
       } else {
         resultDiv.html(`<div class="alert alert-danger">${res.message}</div>`);
+        // Também remove mensagem após 4 segundos
+        setTimeout(() => {
+          resultDiv.fadeOut('slow', () => {
+            resultDiv.html('').show();
+          });
+        }, 4000);
       }
     });
 
