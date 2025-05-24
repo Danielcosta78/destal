@@ -1,4 +1,3 @@
-// destal-premium-final-en.js
 (function() {
   const config = {
     validKeys: {
@@ -133,7 +132,7 @@
         }
       },
       files: {
-        apply: function() { /* nada aqui por enquanto */ },
+        apply: function() { /* nada por enquanto */ },
         remove: function() {}
       },
       colors: {
@@ -162,23 +161,45 @@
 
   let activation = { active: false, key: null, features: [] };
 
-  function init() {
-    loadActivation();
-    addPremiumSection();
-    if (activation.active) applyFeatures();
+  function safeLocalStorageGet(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch(e) {
+      console.warn('LocalStorage get failed:', e);
+      return null;
+    }
+  }
+
+  function safeLocalStorageSet(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch(e) {
+      console.warn('LocalStorage set failed:', e);
+    }
   }
 
   function loadActivation() {
-    const saved = localStorage.getItem('destal-premium');
-    if (saved) activation = JSON.parse(saved);
+    const saved = safeLocalStorageGet('destal-premium');
+    if (saved) {
+      try {
+        activation = JSON.parse(saved);
+        console.log('[Premium] Activation loaded:', activation);
+      } catch {
+        console.warn('[Premium] Failed to parse activation data');
+      }
+    }
   }
 
   function saveActivation() {
-    localStorage.setItem('destal-premium', JSON.stringify(activation));
+    try {
+      safeLocalStorageSet('destal-premium', JSON.stringify(activation));
+      console.log('[Premium] Activation saved:', activation);
+    } catch {}
   }
 
   function activateKey(key) {
     key = key.trim().toUpperCase();
+    console.log('[Premium] Attempt activate key:', key);
     if (!config.validKeys[key]) return { success: false, message: 'Invalid activation key' };
     if (activation.active) removeFeatures();
     activation = {
@@ -267,6 +288,8 @@
   }
 
   $(document).ready(() => {
-    init();
+    loadActivation();
+    addPremiumSection();
+    if (activation.active) applyFeatures();
   });
 })();
