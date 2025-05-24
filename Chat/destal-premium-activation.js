@@ -1,6 +1,5 @@
 // destal-premium-final-en.js
 (function() {
-  // Configuração de chaves e funcionalidades
   const config = {
     validKeys: {
       'FREE2023': { features: [], message: 'Free version activated' },
@@ -9,7 +8,6 @@
     },
     features: {
       themes: {
-        name: 'Premium Themes',
         apply: function() {
           $('#premium-theme-styles').remove();
           $('head').append(`
@@ -38,7 +36,6 @@
                 --card-bg: #003300;
                 --border-color: #4dff4d;
               }
-              /* Novos temas naturais */
               .theme-sunset-glow {
                 --bg-color: #fff5e6;
                 --text-color: #b35c00;
@@ -74,7 +71,6 @@
         }
       },
       emojis: {
-        name: 'Emoji Pack',
         apply: function() {
           if ($('.premium-emojis-toggle').length === 0) {
             $('#sidebar .sidebar-content').prepend(`
@@ -137,26 +133,24 @@
         }
       },
       files: {
-        name: 'Larger Files',
-        apply: function() {
-          // Sem mudanças visuais no momento
-        },
+        apply: function() { /* nada aqui por enquanto */ },
         remove: function() {}
       },
       colors: {
-        name: 'Colored Names',
         apply: function() {
-          $('head').append(`
-            <style id="premium-name-style">
-              .premium-name {
-                background: linear-gradient(90deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                font-weight: bold;
-              }
-            </style>
-          `);
-          $('.message-author').addClass('premium-name');
+          if ($('#premium-name-style').length === 0) {
+            $('head').append(`
+              <style id="premium-name-style">
+                .premium-name {
+                  background: linear-gradient(90deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8);
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                  font-weight: bold;
+                }
+              </style>
+            `);
+            $('.message-author').addClass('premium-name');
+          }
         },
         remove: function() {
           $('.message-author').removeClass('premium-name');
@@ -166,25 +160,17 @@
     }
   };
 
-  let activation = {
-    active: false,
-    key: null,
-    features: []
-  };
+  let activation = { active: false, key: null, features: [] };
 
   function init() {
     loadActivation();
     addPremiumSection();
-    if (activation.active) {
-      applyFeatures();
-    }
+    if (activation.active) applyFeatures();
   }
 
   function loadActivation() {
     const saved = localStorage.getItem('destal-premium');
-    if (saved) {
-      activation = JSON.parse(saved);
-    }
+    if (saved) activation = JSON.parse(saved);
   }
 
   function saveActivation() {
@@ -193,12 +179,8 @@
 
   function activateKey(key) {
     key = key.trim().toUpperCase();
-    if (!config.validKeys[key]) {
-      return { success: false, message: 'Invalid activation key' };
-    }
-    if (activation.active) {
-      removeFeatures();
-    }
+    if (!config.validKeys[key]) return { success: false, message: 'Invalid activation key' };
+    if (activation.active) removeFeatures();
     activation = {
       active: true,
       key: key,
@@ -213,49 +195,36 @@
     removeFeatures();
     activation = { active: false, key: null, features: [] };
     saveActivation();
-    $('.activation-result').html(`
-      <div class="alert alert-success">Premium features removed successfully</div>
-    `);
-    setTimeout(() => location.reload(), 1000);
+    $('.activation-result').html(`<div class="alert alert-success">Premium removed successfully</div>`);
+    setTimeout(() => location.reload(), 800);
   }
 
   function applyFeatures() {
-    activation.features.forEach(feature => {
-      if (config.features[feature] && config.features[feature].apply) {
-        config.features[feature].apply();
-      }
+    activation.features.forEach(f => {
+      if (config.features[f] && config.features[f].apply) config.features[f].apply();
     });
   }
 
   function removeFeatures() {
-    activation.features.forEach(feature => {
-      if (config.features[feature] && config.features[feature].remove) {
-        config.features[feature].remove();
-      }
+    activation.features.forEach(f => {
+      if (config.features[f] && config.features[f].remove) config.features[f].remove();
     });
   }
 
   function addPremiumSection() {
-    // Remove seção anterior se existir
     $('.sidebar-section.premium-section').remove();
 
-    // Cria a seção Premium no topo do menu
     $('#sidebar .sidebar-content').prepend(`
-      <div class="sidebar-section premium-section">
+      <div class="sidebar-section premium-section" style="margin-bottom: 15px;">
         <h5 class="sidebar-title"><i class="fas fa-crown"></i> Premium</h5>
-        <div class="form-group">
-          <input type="text" class="form-control mb-2 premium-key-input" placeholder="Enter activation key">
-          <button class="btn btn-primary btn-sm btn-block activate-btn">Activate</button>
-          ${activation.active ? `
-            <button class="btn btn-danger btn-sm btn-block mt-2 remove-premium-btn">Remove Premium</button>
-          ` : ''}
-        </div>
+        <input type="text" class="form-control premium-key-input mb-2" placeholder="Enter activation key" style="width: 100%; box-sizing: border-box;">
+        <button class="btn btn-primary btn-sm btn-block activate-btn">Activate</button>
+        ${activation.active ? `<button class="btn btn-danger btn-sm btn-block mt-2 remove-premium-btn">Remove Premium</button>` : ''}
         <div class="activation-result mt-2"></div>
       </div>
-
-      <div class="sidebar-section premium-themes-container" style="display: none; margin-top: 15px;">
+      <div class="sidebar-section premium-themes-container" style="display:none; margin-top: 10px;">
         <h5 class="sidebar-title"><i class="fas fa-palette"></i> Premium Themes</h5>
-        <select class="form-control form-control-sm theme-selector" style="margin-top: 8px;">
+        <select class="form-control form-control-sm theme-selector" style="margin-top: 6px;">
           <option value="">Default Theme</option>
           <option value="theme-matrix">Matrix</option>
           <option value="theme-deep-blue">Deep Blue</option>
@@ -269,45 +238,34 @@
       </div>
     `);
 
-    if (!activation.active) {
-      $('.premium-themes-container').hide();
+    if (activation.active) {
+      $('.premium-themes-container').show();
     }
 
-    // Eventos
-    $('.activate-btn').on('click', () => {
+    $(document).off('click', '.activate-btn').on('click', '.activate-btn', () => {
       const key = $('.premium-key-input').val();
       const res = activateKey(key);
-      const resultDiv = $('.activation-result');
+      $('.activation-result').html(res.success 
+        ? `<div class="alert alert-success">${res.message}</div>`
+        : `<div class="alert alert-danger">${res.message}</div>`);
       if (res.success) {
-        resultDiv.html(`<div class="alert alert-success">${res.message}</div>`);
-        // Atualiza botão remover
         $('.premium-section').find('.remove-premium-btn').remove();
-        $('.premium-section .form-group').append(`
-          <button class="btn btn-danger btn-sm btn-block mt-2 remove-premium-btn">Remove Premium</button>
-        `);
+        $('.premium-section .activate-btn').after(`<button class="btn btn-danger btn-sm btn-block mt-2 remove-premium-btn">Remove Premium</button>`);
         $('.premium-themes-container').show();
-      } else {
-        resultDiv.html(`<div class="alert alert-danger">${res.message}</div>`);
       }
     });
 
-    $(document).on('click', '.remove-premium-btn', () => {
+    $(document).off('click', '.remove-premium-btn').on('click', '.remove-premium-btn', () => {
       removePremium();
     });
 
-    // Aplicar tema selecionado
     $('.theme-selector').on('change', function() {
       const theme = $(this).val();
-      $('body').removeClass(
-        'theme-matrix theme-deep-blue theme-dark-red theme-nature-green theme-sunset-glow theme-ocean-breeze theme-forest-mist theme-lavender-dream'
-      );
-      if (theme) {
-        $('body').addClass(theme);
-      }
+      $('body').removeClass('theme-matrix theme-deep-blue theme-dark-red theme-nature-green theme-sunset-glow theme-ocean-breeze theme-forest-mist theme-lavender-dream');
+      if (theme) $('body').addClass(theme);
     });
   }
 
-  // Inicializa ao carregar o script
   $(document).ready(() => {
     init();
   });
