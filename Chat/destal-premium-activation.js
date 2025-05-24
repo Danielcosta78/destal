@@ -1,266 +1,273 @@
-// destal-premium-floating.js
-// Sistema premium com botão flutuante e chaves permanentes
+// destal-premium-fixed.js
+// Premium system with fixed button and working keys
 (function() {
-  // Configuração do sistema
+  // Configuration
   const config = {
-    // Chaves válidas (agora sem expiração)
-    keys: {
-      'FREE': { name: 'Free', features: [] },
-      'PRO': { name: 'Pro', features: ['themes', 'emojis'] },
-      'ULTRA': { name: 'Ultra', features: ['themes', 'emojis', 'files', 'history', 'colors'] },
-      'TEST': { name: 'Test', features: ['themes', 'emojis', 'files', 'history', 'colors'] }
+    validKeys: {
+      'FREE2023': { 
+        name: 'Free Tier', 
+        features: [],
+        message: 'Free version activated'
+      },
+      'PRO2023': { 
+        name: 'Pro Version', 
+        features: ['themes', 'emojis'],
+        message: 'Pro features unlocked!'
+      },
+      'ULTRA2023': { 
+        name: 'Ultra Version', 
+        features: ['themes', 'emojis', 'files', 'history', 'colors'],
+        message: 'All premium features unlocked!'
+      },
+      'TEST2023': { 
+        name: 'Test Mode', 
+        features: ['themes', 'emojis', 'files', 'history', 'colors'],
+        message: 'Developer test mode activated'
+      }
     },
     
-    // Definição dos recursos
     features: {
       'themes': {
-        name: 'Temas Premium',
+        name: 'Premium Themes',
         apply: function() {
-          // Adiciona temas extras
           $('head').append(`
             <style>
-              .theme-matrix { --bg-color: #000; --text-color: #0f0; }
-              .theme-ice { --bg-color: #f0f8ff; --text-color: #005588; }
-              .theme-sunset { --bg-color: #fff8f0; --text-color: #882200; }
+              .premium-theme-matrix {
+                --bg-color: #000000;
+                --text-color: #00ff00;
+                --card-bg: #121212;
+                --border-color: #00ff00;
+              }
+              .premium-theme-ice {
+                --bg-color: #f0f8ff;
+                --text-color: #005588;
+                --card-bg: #ffffff;
+                --border-color: #005588;
+              }
             </style>
           `);
           
-          // Adiciona seletor de temas
           $('body').append(`
-            <select class="destal-theme-selector" style="position:fixed; bottom:70px; right:20px; z-index:1000;">
-              <option value="">Tema Padrão</option>
-              <option value="theme-matrix">Matrix</option>
-              <option value="theme-ice">Gelo</option>
-              <option value="theme-sunset">Pôr do Sol</option>
+            <select class="premium-theme-selector" 
+                    style="position:fixed; bottom:80px; right:20px; 
+                           z-index:1000; padding:5px; border-radius:5px;">
+              <option value="">Default Theme</option>
+              <option value="premium-theme-matrix">Matrix</option>
+              <option value="premium-theme-ice">Ice Blue</option>
             </select>
           `);
           
-          $('.destal-theme-selector').change(function() {
-            $('body').removeClass('theme-matrix theme-ice theme-sunset');
-            if ($(this).val()) $('body').addClass($(this).val());
+          $(document).on('change', '.premium-theme-selector', function() {
+            $('body').removeClass('premium-theme-matrix premium-theme-ice');
+            if ($(this).val()) {
+              $('body').addClass($(this).val());
+            }
           });
         }
       },
-      
       'emojis': {
-        name: 'Emojis Especiais',
+        name: 'Special Emojis',
         apply: function() {
           const emojis = ['🚀', '🎩', '👑', '💎', '✨', '⚡'];
           
-          // Adiciona botão flutuante de emojis
           $('body').append(`
-            <div class="destal-emoji-picker" style="display:none; position:fixed; bottom:120px; right:20px; background:rgba(255,255,255,0.9); padding:10px; border-radius:10px; z-index:1000;">
-              ${emojis.map(e => `<span class="destal-emoji" style="font-size:24px; cursor:pointer; margin:5px;">${e}</span>`).join('')}
+            <div class="premium-emoji-panel" 
+                 style="display:none; position:fixed; bottom:130px; right:20px; 
+                        background:rgba(255,255,255,0.9); padding:10px; 
+                        border-radius:10px; z-index:1000;">
+              ${emojis.map(e => `<span class="premium-emoji" 
+                                   style="font-size:24px; cursor:pointer; 
+                                          margin:5px;">${e}</span>`).join('')}
             </div>
           `);
           
-          // Mostra/oculta o painel de emojis
-          $(document).on('click', '.destal-emoji-btn', function() {
-            $('.destal-emoji-picker').toggle();
-          });
-          
-          // Insere emoji no chat
-          $(document).on('click', '.destal-emoji', function() {
+          $(document).on('click', '.premium-emoji', function() {
             $('#messageText').val($('#messageText').val() + $(this).text());
           });
         }
       },
-      
       'files': {
-        name: 'Arquivos Grandes',
+        name: 'Larger Files',
         apply: function() {
           $(document).on('change', '#fileInput', function() {
             const file = this.files[0];
-            if (file && file.size > 100000000) { // 100MB
-              alert('Arquivo muito grande (limite: 100MB)');
+            if (file && file.size > 100000000) {
+              alert('File too large (max 100MB)');
               $(this).val('');
             }
           });
         }
       },
-      
-      'history': {
-        name: 'Histórico Extendido',
-        apply: function() {
-          // Implementação do histórico maior
-          console.log('Histórico extendido ativado');
-        }
-      },
-      
       'colors': {
-        name: 'Cores Personalizadas',
+        name: 'Colored Names',
         apply: function() {
           $('head').append(`
             <style>
-              .destal-color-name {
+              .premium-name {
                 background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
+                font-weight: bold;
               }
             </style>
           `);
-          $('.message-author').addClass('destal-color-name');
+          $('.message-author').addClass('premium-name');
         }
       }
     }
   };
 
-  // Estado atual
-  let currentStatus = {
+  // Current activation status
+  let activation = {
     active: false,
     key: null,
     tier: null,
     features: []
   };
 
-  // Inicialização
+  // Initialize system
   function init() {
-    loadStatus();
-    createFloatingButton();
-    if (currentStatus.active) applyFeatures();
+    loadActivation();
+    createUI();
+    if (activation.active) applyFeatures();
   }
 
-  // Carrega o status salvo
-  function loadStatus() {
+  function loadActivation() {
     const saved = localStorage.getItem('destal-premium');
     if (saved) {
-      currentStatus = JSON.parse(saved);
-      console.log('Status premium carregado:', currentStatus);
+      activation = JSON.parse(saved);
+      console.log('Loaded premium activation:', activation);
     }
   }
 
-  // Salva o status
-  function saveStatus() {
-    localStorage.setItem('destal-premium', JSON.stringify(currentStatus));
+  function saveActivation() {
+    localStorage.setItem('destal-premium', JSON.stringify(activation));
   }
 
-  // Ativa uma chave
-  function activateKey(key) {
+  function activate(key) {
     key = key.trim().toUpperCase();
     
-    if (!config.keys[key]) {
-      return { success: false, message: 'Chave inválida' };
+    if (!config.validKeys[key]) {
+      return {
+        success: false,
+        message: 'Invalid activation key'
+      };
     }
     
-    currentStatus = {
+    activation = {
       active: true,
       key: key,
-      tier: config.keys[key].name,
-      features: config.keys[key].features
+      tier: config.validKeys[key].name,
+      features: config.validKeys[key].features,
+      message: config.validKeys[key].message
     };
     
-    saveStatus();
+    saveActivation();
     applyFeatures();
     
-    return { 
-      success: true, 
-      message: `Premium ativado! (${config.keys[key].name})` 
+    return {
+      success: true,
+      message: activation.message
     };
   }
 
-  // Aplica os recursos ativos
   function applyFeatures() {
-    currentStatus.features.forEach(feat => {
-      if (config.features[feat] && config.features[feat].apply) {
-        config.features[feat].apply();
+    activation.features.forEach(feature => {
+      if (config.features[feature] && config.features[feature].apply) {
+        config.features[feature].apply();
       }
     });
+    
+    // Update button to show active tier
+    $('.premium-floating-btn').html(`
+      <i class="fas fa-crown"></i> ${activation.tier}
+    `).css('background', 'rgba(0,180,0,0.7)');
   }
 
-  // Cria o botão flutuante
-  function createFloatingButton() {
-    // Remove se já existir
-    $('.destal-premium-btn').remove();
-    
-    // Cria o botão principal
+  function createUI() {
+    // Floating button (fixed position)
     $('body').append(`
-      <button class="destal-premium-btn" 
+      <button class="premium-floating-btn" 
               style="position:fixed; bottom:20px; right:20px; 
-                     width:50px; height:50px; border-radius:50%; 
-                     background:rgba(255,215,0,0.5); border:none; 
-                     color:white; font-size:20px; cursor:pointer;
-                     z-index:1000; backdrop-filter:blur(5px);">
+                     width:60px; height:60px; border-radius:50%; 
+                     background:rgba(255,215,0,0.7); border:none; 
+                     color:white; font-size:24px; cursor:pointer;
+                     z-index:9999; backdrop-filter:blur(2px);
+                     box-shadow:0 2px 10px rgba(0,0,0,0.2);">
         <i class="fas fa-crown"></i>
       </button>
     `);
     
-    // Cria o modal de ativação
+    // Activation modal
     $('body').append(`
-      <div class="destal-premium-modal" 
+      <div class="premium-modal" 
            style="display:none; position:fixed; top:0; left:0; 
-                  width:100%; height:100%; background:rgba(0,0,0,0.7); 
-                  z-index:2000; display:flex; justify-content:center; 
+                  width:100%; height:100%; background:rgba(0,0,0,0.8); 
+                  z-index:10000; display:flex; justify-content:center; 
                   align-items:center;">
-        <div style="background:white; padding:20px; border-radius:10px; max-width:400px;">
-          <h3><i class="fas fa-crown"></i> Ativar Premium</h3>
-          <input type="text" class="destal-key-input" 
-                 placeholder="Digite sua chave" 
-                 style="width:100%; padding:10px; margin:10px 0;">
-          <button class="destal-activate-btn" 
-                  style="background:gold; border:none; padding:10px 20px; 
-                         border-radius:5px; cursor:pointer;">
-            Ativar
+        <div style="background:#fff; padding:20px; border-radius:10px; 
+                    max-width:400px; width:90%;">
+          <h3 style="margin-top:0;"><i class="fas fa-crown"></i> Premium Activation</h3>
+          <input type="text" class="premium-key-input" 
+                 placeholder="Enter activation key" 
+                 style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd;">
+          <button class="premium-activate-btn" 
+                  style="background:#4361ee; color:#fff; border:none; 
+                         padding:10px 20px; border-radius:5px; cursor:pointer;">
+            Activate
           </button>
-          <div class="destal-result" style="margin-top:10px;"></div>
+          <div class="premium-activation-result" style="margin-top:10px;"></div>
           
           <div style="margin-top:20px; border-top:1px solid #eee; padding-top:10px;">
-            <h4>Chaves de Teste:</h4>
-            <ul>
-              <li><strong>FREE</strong> - Versão gratuita</li>
-              <li><strong>PRO</strong> - Temas e Emojis</li>
-              <li><strong>ULTRA</strong> - Todos recursos</li>
+            <h4>Test Keys:</h4>
+            <ul style="padding-left:20px;">
+              <li><strong>FREE2023</strong> - Basic version</li>
+              <li><strong>PRO2023</strong> - Pro features</li>
+              <li><strong>ULTRA2023</strong> - All premium features</li>
             </ul>
           </div>
         </div>
       </div>
     `);
     
-    // Eventos do botão
-    $(document).on('click', '.destal-premium-btn', function() {
-      $('.destal-premium-modal').show();
+    // Load Font Awesome if needed
+    if (!$('i.fas').length) {
+      $('head').append('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">');
+    }
+    
+    // Event handlers
+    $(document).on('click', '.premium-floating-btn', function() {
+      $('.premium-modal').show();
     });
     
-    // Fechar modal
-    $(document).on('click', '.destal-premium-modal', function(e) {
-      if ($(e.target).hasClass('destal-premium-modal')) {
-        $('.destal-premium-modal').hide();
+    $(document).on('click', '.premium-modal', function(e) {
+      if ($(e.target).hasClass('premium-modal')) {
+        $('.premium-modal').hide();
       }
     });
     
-    // Ativar chave
-    $(document).on('click', '.destal-activate-btn', function() {
-      const key = $('.destal-key-input').val();
-      const result = activateKey(key);
+    $(document).on('click', '.premium-activate-btn', function() {
+      const key = $('.premium-key-input').val();
+      const result = activate(key);
       
-      $('.destal-result').html(`
-        <div style="color:${result.success ? 'green' : 'red'}">
+      $('.premium-activation-result').html(`
+        <div style="color:${result.success ? 'green' : 'red'};">
           ${result.message}
         </div>
       `);
       
       if (result.success) {
         setTimeout(() => {
-          $('.destal-premium-modal').hide();
+          $('.premium-modal').hide();
           location.reload();
         }, 1500);
       }
     });
-    
-    // Adiciona ícone de coroa se não existir
-    if (!$('i.fa-crown').length) {
-      $('head').append('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">');
-    }
   }
 
-  // Inicia quando o DOM estiver pronto
+  // Initialize when DOM is ready
   $(document).ready(function() {
-    // Verifica se o chat está carregado
-    if ($('.message-container').length) {
-      init();
-    } else {
-      // Tenta novamente após 1 segundo
-      setTimeout(init, 1000);
-    }
+    setTimeout(init, 500); // Small delay to ensure everything is loaded
   });
 
 })();
