@@ -163,28 +163,49 @@
         features: []
     };
 
+    // Global flag to track if PayPal SDK is loaded
+    let paypalSdkLoaded = false;
+
     function init() {
-        // Load PayPal SDK script dynamically
+        loadActivation();
+        addPremiumSection(); // Add the section first so container exists
+
+        // Load PayPal SDK script dynamically only if it's not already there
         if (!$('script[src*="paypal.com/sdk"]').length) {
             const paypalScript = document.createElement('script');
             paypalScript.src = "https://www.paypal.com/sdk/js?client-id=BAAkPzm10hAQfwuLQe5bVE_a0ncc5lBvxDLnhJKcBHgSHts8gGaPMjJaOA6Nc4Z34j2IMORrfkjgEnvBB8&components=hosted-buttons&disable-funding=venmo&currency=USD";
             paypalScript.onload = () => {
                 console.log('PayPal SDK loaded.');
-                // Initialize PayPal Hosted Buttons after SDK loads, if needed
-                // Note: The render call is moved to addPremiumSection to ensure the container exists
+                paypalSdkLoaded = true; // Set flag
+                // Attempt to render PayPal button after SDK loads, if not active
+                if (!activation.active) {
+                    showPaypalButton();
+                }
+            };
+            paypalScript.onerror = () => {
+                console.error('Failed to load PayPal SDK.');
             };
             document.head.appendChild(paypalScript);
+        } else {
+            // If script is already in DOM (e.g., hardcoded in HTML), assume it's loaded
+            paypalSdkLoaded = true;
+            // Attempt to render immediately if already loaded and not active
+            if (!activation.active) {
+                showPaypalButton();
+            }
         }
 
-        loadActivation();
-        addPremiumSection();
+
         if (activation.active) {
             applyFeatures();
-            // Ajusta visual para premium ativo
             hideActivationInput();
             hidePaypalButton(); // Hide PayPal button if premium is active
         } else {
-            showPaypalButton(); // Show PayPal button if premium is not active
+            // If not active and SDK was already loaded, show it
+            if (paypalSdkLoaded) {
+                showPaypalButton();
+            }
+            // Otherwise, it will be shown when SDK loads in the onload callback
         }
     }
 
@@ -222,7 +243,6 @@
         activation = { active: false, key: null, features: [] };
         saveActivation();
         $('.activation-result').html(`<div class="alert alert-success">Premium features removed successfully</div>`);
-        // Mostra input novamente após remover premium
         showActivationInput();
         showPaypalButton(); // Show PayPal button again
         setTimeout(() => location.reload(), 1000);
@@ -259,12 +279,21 @@
     }
 
     function showPaypalButton() {
-        $('#paypal-container-V7HLZPTQNAF8W').show();
-        // Re-render PayPal button if it's hidden and the SDK is loaded
-        if (typeof paypal !== 'undefined' && paypal.HostedButtons) {
+        const paypalContainer = $('#paypal-container-V7HLZPTQNAF8W');
+        if (paypalSdkLoaded && typeof paypal !== 'undefined' && paypal.HostedButtons && paypalContainer.length) {
+            // Ensure the container is visible before rendering
+            paypalContainer.show();
+            // Clear previous content to avoid duplicate buttons if re-rendering
+            paypalContainer.empty();
             paypal.HostedButtons({
                 hostedButtonId: "V7HLZPTQNAF8W",
-            }).render("#paypal-container-V7HLZPTQNAF8W");
+            }).render("#paypal-container-V7HLZPTQNAF8W")
+            .catch(error => {
+                console.error("PayPal button rendering error:", error);
+            });
+        } else {
+            // If SDK not loaded or container not ready, just ensure it's visible if it ever appears
+            paypalContainer.show();
         }
     }
 
@@ -302,22 +331,14 @@
             </div>
         `);
 
-        // Render PayPal button immediately after its container is added to DOM
-        if (typeof paypal !== 'undefined' && paypal.HostedButtons) {
-            paypal.HostedButtons({
-                hostedButtonId: "V7HLZPTQNAF8W",
-            }).render("#paypal-container-V7HLZPTQNAF8W");
-        }
-
-
+        // Initial visibility based on activation status
         if (!activation.active) {
             $('.premium-themes-container').hide();
-            showPaypalButton(); // Show PayPal button
+            // PayPal button will be shown by init() once SDK loads
         } else {
-            // Se premium ativo, mostra container temas e esconde input ativação
             $('.premium-themes-container').show();
             hideActivationInput();
-            hidePaypalButton(); // Hide PayPal button
+            hidePaypalButton();
         }
 
         // Eventos
@@ -327,7 +348,6 @@
             const resultDiv = $('.activation-result');
             if (res.success) {
                 resultDiv.html(`<div class="alert alert-success">${res.message}</div>`);
-                // Esconder input ativação e mostrar botão remover
                 hideActivationInput();
                 hidePaypalButton(); // Hide PayPal button
                 if ($('.remove-premium-btn').length === 0) {
@@ -337,7 +357,6 @@
                 }
                 $('.premium-themes-container').show();
 
-                // Remove a mensagem após 4 segundos
                 setTimeout(() => {
                     resultDiv.fadeOut('slow', () => {
                         resultDiv.html('').show();
@@ -345,7 +364,6 @@
                 }, 4000);
             } else {
                 resultDiv.html(`<div class="alert alert-danger">${res.message}</div>`);
-                // Também remove mensagem após 4 segundos
                 setTimeout(() => {
                     resultDiv.fadeOut('slow', () => {
                         resultDiv.html('').show();
@@ -358,7 +376,6 @@
             removePremium();
         });
 
-        // Aplicar tema selecionado
         $('.theme-selector').on('change', function() {
             const theme = $(this).val();
             $('body').removeClass(
