@@ -82,7 +82,7 @@
                                 </button>
                             </div>
                         `);
-                        $('#sidebar .sidebar-content').prepend(`
+                        $('#sidebar .sidebar-content').append(`
                             <div class="sidebar-section premium-emojis-container" style="display:none;">
                                 <h5 class="sidebar-title"><i class="fas fa-smile"></i> Premium Emojis</h5>
                                 <div class="emoji-grid" style="
@@ -302,7 +302,7 @@
         $('.sidebar-section.premium-section').remove();
 
         // Cria a seção Premium no topo do menu
-        $('#sidebar .sidebar-content').prepend(`
+        $('#sidebar .sidebar-content').append(`
             <div class="sidebar-section premium-section">
                 <h5 class="sidebar-title"><i class="fas fa-crown"></i> Premium</h5>
                 <div class="form-group">
